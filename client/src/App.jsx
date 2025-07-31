@@ -1,12 +1,34 @@
 import './App.css'
+import Register from './pages/Register'
+import ThemeToggle from './components/ThemeToggle'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { ToastContainer } from 'react-toastify'
+import Login from './pages/Login'
+import ForgotPassword from './pages/ForgotPassword'
+import Home from './pages/Home'
+import Conversations from './pages/Conversations'
+import Message from './pages/Message'
+import Header from './components/Header'
 
 function App() {
 
   return (
-    <div className='root'>
-      <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Nihil natus, porro ab impedit doloribus, placeat laborum ut tenetur vitae dignissimos deserunt magni et reprehenderit ducimus doloremque rem ratione? Numquam consequatur debitis similique velit! Aspernatur fuga, aliquid autem consectetur officia a maiores eum, totam cum adipisci ex! Error, libero eligendi magnam incidunt dolor eos, doloremque cum numquam ipsam nulla unde nisi, laboriosam explicabo necessitatibus? Eius, iure dignissimos! Sint placeat non dolor quasi, facilis excepturi commodi beatae nostrum eum illo vitae doloremque fuga iure sapiente enim est repellendus, aspernatur laudantium aperiam totam at. Voluptatem obcaecati placeat, accusantium voluptates sit praesentium dolor id.</p>
-    </div> 
-  )
+    <BrowserRouter>
+      <ToastContainer />
+      {/* <ThemeToggle /> */}
+      <main className='px-2 py-1 max-h-screen'>
+          <Header />
+        <Routes>
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/conversations" element={<Conversations />} />
+          {/* <Route path="/conversations/message" element={<Message />} /> */}
+        </Routes>
+      </main>
+    </BrowserRouter>
+  );
 }
 
 export default App

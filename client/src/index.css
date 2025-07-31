@@ -14,3 +14,79 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+:root {
+  color: #213547;
+  background-color: #E2E8F0;
+}
+
+.dark {
+  color: #dadada;
+  background-color: #1a1a1a;
+}
+
+/* Base font stack and color for headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 600;
+  color: #222;
+  line-height: 1.2;
+  margin: 0.5em 0;
+}
+/* Individual heading sizes */
+h1 {
+  font-size: 2.5rem; /* ~40px */
+  letter-spacing: -1px;
+}
+h2 {
+  font-size: 2rem; /* ~32px */
+  letter-spacing: -0.5px;
+}
+h3 {
+  font-size: 1.75rem; /* ~28px */
+}
+h4 {
+  font-size: 1.5rem; /* ~24px */
+}
+h5 {
+  font-size: 1.25rem; /* ~20px */
+}
+h6 {
+  font-size: 1rem; /* ~16px */
+  font-weight: 500;
+  color: #444;
+}
+
+
+.input-field {
+  width: 100%;
+  padding: 0.5rem 1rem; /* py-2 px-4 */
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  background-color: #ffffff; /* bg-white */
+  color: #000000; /* text-black */
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.input-field:focus {
+  box-shadow: 0 0 0 2px #60a5fa; /* focus:ring-2 focus:ring-blue-400 */
+}
+
+/* Dark mode styles (when .dark is applied to html or body) */
+.dark .input-field {
+  border-color: #4b5563; /* dark:border-gray-600 */
+  background-color: #2a2a2a; /* dark:bg-gray-700 */
+  color: #ffffff; /* dark:text-white */
+}
+
+.active-link {
+  color: #00249a;
+  text-decoration: none;
+}
+.dark .active-link {
+  color: #3f91f6; 
+}
+.active-link:hover {
+  text-decoration: underline;
+}
