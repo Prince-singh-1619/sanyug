@@ -17,6 +17,9 @@ async function signUpController(req, res){
         if(!email) throw new Error("Please provide email")
         if(!password) throw new Error("Please provide password")
 
+        //creating username from email
+        const username = email.split("@")[0]
+
         //hashing password
         const salt = bcrypt.genSaltSync(10)
         const hashedPassword = bcrypt.hashSync(password, salt)
@@ -25,6 +28,7 @@ async function signUpController(req, res){
         const payload = {
             firstName,
             lastName,
+            username,
             email,
             password: hashedPassword,
             isVerified: true
@@ -43,14 +47,6 @@ async function signUpController(req, res){
             message: "User created successfully",
             token,
             user: userWithoutPassword,
-            // user : {
-            //     userId: userWithoutPassword._id,
-            //     firstName: userWithoutPassword.firstName,
-            //     lastName: userWithoutPassword.lastName,
-            //     email: userWithoutPassword.email,
-            //     // userTag: userWithoutPassword.userTag,
-            //     // profilePic: userWithoutPassword.profilePic,
-            // },
             success: true, 
             error: false,
         })

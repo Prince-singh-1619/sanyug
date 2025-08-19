@@ -17,6 +17,28 @@ const SummaryApi = {
         url:`${backendDomain}/api/login`,
         method: "POST"
     },
+    searchUser:{
+        url:`${backendDomain}/api/search-user`,
+        method: "GET"
+    },
+    addUserToChat:{
+        url:`${backendDomain}/api/conversations/add-user-to-chat`,
+        method: "POST"
+    },
+    fetchConvos:{
+        url:`${backendDomain}/api/fetch-convo`,
+        method: "GET"
+    },
+    sendMessage:{
+        url:`${backendDomain}/api/store-message`,
+        method: "POST"
+    },
+    fetchMessage:{
+        url:`${backendDomain}/api/fetch-message`,
+        method: "GET"
+    },
+    
+
 }
 
 export default SummaryApi

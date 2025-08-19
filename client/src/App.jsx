@@ -9,6 +9,7 @@ import Home from './pages/Home'
 import Conversations from './pages/Conversations'
 import Message from './pages/Message'
 import Header from './components/Header'
+import MyProfile from './pages/MyProfile'
 
 function App() {
 
@@ -17,14 +18,14 @@ function App() {
       <ToastContainer />
       {/* <ThemeToggle /> */}
       <main className='px-2 py-1 max-h-screen'>
-          <Header />
+        {/* <Header /> */}
         <Routes>
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/" element={<Home />} />
           <Route path="/conversations" element={<Conversations />} />
-          {/* <Route path="/conversations/message" element={<Message />} /> */}
+          <Route path="/my-profile" element={<MyProfile />} />
         </Routes>
       </main>
     </BrowserRouter>

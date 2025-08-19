@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import SummaryApi from '../helpers/SummaryApi';
 import { toast } from 'react-toastify';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const Login = () => {
@@ -14,7 +14,7 @@ const Login = () => {
     const [error, setError] = useState({});
 
     const [showPassword, setShowPassword] = useState(false)
-    // const navigate = useNavigate()
+    const navigate = useNavigate()
     
     const handleOnChange = (e) => {
         const { name, value } = e.target;
@@ -48,8 +48,9 @@ const Login = () => {
             const data = await res.json()
             if(data.success) {
                 console.log("dataApi message from success: ", data.message)
+                localStorage.setItem("userData", JSON.stringify(data.user));
                 toast.success(data.message)
-                // navigate("/")
+                navigate("/")
             }
             if(data.error) {
                 console.log("dataApi message from error: ", data.message)
@@ -81,7 +82,7 @@ const Login = () => {
                 </label>
                 <Link to={'/forgot-password'} className='active-link text-right -mt-2 mb-2'>forgot password?</Link>
                 
-                <button className='btn'>{loading ? "Creating..." : "Create Account"} </button>
+                <button className='btn'>{loading ? "Logging in..." : "Log in"} </button>
             </form>
 
             <span>Don't have an existing account?  

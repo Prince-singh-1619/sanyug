@@ -33,8 +33,9 @@ async function verifyOtpController(req, res){
     } catch (error) {
         res.status(500).json({
             verified: false,
-            error: 'Server error',
-            message: 'Server error',
+            message: error.message || 'Server error',
+            error: true,
+            success: false,
         });
     }
 }

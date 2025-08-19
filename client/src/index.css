@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./css/popup.css";
 
 :root {
   /* font-family: system-ui, Avenir, Helvetica, Arial, sans-serif; */
@@ -6,8 +7,8 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  /* color: rgba(255, 255, 255, 0.87); */
-  /* background-color: #242424; */
+  /* color: rgba(255, 255, 255, 0.87);
+  background-color: #242424; */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -18,43 +19,17 @@
 :root {
   color: #213547;
   background-color: #E2E8F0;
+  
 }
+/* @media (prefers-color-scheme: dark){ */
+  .dark {
+    color: #dadada;
+    background-color: #1a1a1a;
+  }
+/* } */
 
-.dark {
-  color: #dadada;
-  background-color: #1a1a1a;
-}
-
-/* Base font stack and color for headings */
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  font-weight: 600;
-  color: #222;
-  line-height: 1.2;
-  margin: 0.5em 0;
-}
-/* Individual heading sizes */
-h1 {
-  font-size: 2.5rem; /* ~40px */
-  letter-spacing: -1px;
-}
-h2 {
-  font-size: 2rem; /* ~32px */
-  letter-spacing: -0.5px;
-}
-h3 {
-  font-size: 1.75rem; /* ~28px */
-}
-h4 {
-  font-size: 1.5rem; /* ~24px */
-}
-h5 {
-  font-size: 1.25rem; /* ~20px */
-}
-h6 {
-  font-size: 1rem; /* ~16px */
-  font-weight: 500;
-  color: #444;
+.dark .active-link-text:hover{
+  color:#1a1a1a;
 }
 
 
@@ -63,21 +38,32 @@ h6 {
   padding: 0.5rem 1rem; /* py-2 px-4 */
   border: 1px solid #d1d5db; /* border-gray-300 */
   border-radius: 0.5rem; /* rounded-lg */
-  background-color: #ffffff; /* bg-white */
+  background-color: #E2E8F0; /* bg-white */
   color: #000000; /* text-black */
+  resize: none;                  /* resize-none */
   outline: none;
   transition: all 0.2s ease;
 }
+.input-field::placeholder {
+  color: #6b7280;              /* dark:placeholder-gray-400 */
+}
 
 .input-field:focus {
-  box-shadow: 0 0 0 2px #60a5fa; /* focus:ring-2 focus:ring-blue-400 */
+  box-shadow: 0 0 0 2px #5aa1f9; /* focus:ring-2 focus:ring-blue-400 */
+  border: transparent;
 }
 
 /* Dark mode styles (when .dark is applied to html or body) */
-.dark .input-field {
-  border-color: #4b5563; /* dark:border-gray-600 */
-  background-color: #2a2a2a; /* dark:bg-gray-700 */
-  color: #ffffff; /* dark:text-white */
+@media (prefers-color-scheme: dark){
+  .dark .input-field {
+    border-color: #4b5563; /* dark:border-gray-600 */
+    background-color: #2a2a2a; /* dark:bg-gray-700 */
+    color: #ffffff; /* dark:text-white */
+  }
+  .input-field::placeholder {
+    color: #9ca3af;              /* dark:placeholder-gray-400 */
+  }
+
 }
 
 .active-link {
@@ -90,3 +76,11 @@ h6 {
 .active-link:hover {
   text-decoration: underline;
 }
+
+/* @keyframes slide-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out forwards;
+} */

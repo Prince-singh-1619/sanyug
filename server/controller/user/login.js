@@ -25,6 +25,7 @@ async function loginController(req, res){
                 userId: user._id,
                 firstName: user.firstName,
                 lastName: user.lastName,
+                username: user.username,
                 email: user.email,
                 userTag: user.userTag,
                 profilePic: user.profilePic,

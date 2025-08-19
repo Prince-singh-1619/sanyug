@@ -1,13 +1,17 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { FaHome } from 'react-icons/fa'
 import { MdOutlineMessage, MdOutlineSettings } from 'react-icons/md'
 import { TbProgress } from "react-icons/tb";
 import { CgProfile } from "react-icons/cg";
-
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 
 const Home = () => {
+    const navigate = useNavigate()
+    useEffect(()=>{
+        navigate('/conversations')
+    },[])
+
     const navArray = [
         {
             icon: <MdOutlineMessage/>,
@@ -33,7 +37,7 @@ const Home = () => {
     
   return (
     <section className='w-full'>
-        <h1 className='opactiy-75'>Menu</h1>
+        <p className='opactiy-75 text-4xl'>Menu</p>
         <div className='flex items-center justify-around'>
             {
                 navArray.map((data, index)=>{

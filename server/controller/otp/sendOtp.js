@@ -13,7 +13,7 @@ async function sendOtpController(req, res){
 
         // delete previous
         await otpModel.deleteMany({ email })
-        // create new onw
+        // create new one
         await otpModel.create({ email, otp})
 
         // otpStore[email] = otp
@@ -31,7 +31,7 @@ async function sendOtpController(req, res){
         await transporter.sendMail({
             from: 'Sanyug_Team@gmail.com',
             to: email,
-            subject: 'Your OTP Code',
+            subject: 'Sanyug OTP Code',
             text: `Your OTP code for Sanyug web app is ${otp}. This is only valid for 15 minutes.`
         });
 

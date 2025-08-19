@@ -6,7 +6,7 @@ import './css/btn.css'
 import './css/loader.css'
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>  
+  // <StrictMode>  
     <App />
-  </StrictMode>
+  // {/* </StrictMode> */}
 )
