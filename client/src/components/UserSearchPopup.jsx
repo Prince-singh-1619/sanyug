@@ -111,6 +111,7 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
       }
 
       console.log('Conversation created/fetched:', data);
+      onClose()
 
       // Optionally update your state to show new conversation instantly
       // setConversations(prev => [...prev, data]);

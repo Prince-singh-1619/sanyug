@@ -12,7 +12,7 @@ import { toast } from 'react-toastify';
 import TextOutline from '../helpers/TextOutline';
 import { HiRefresh } from "react-icons/hi";
 import { AiOutlineSelect } from 'react-icons/ai';
-
+import socket from '../helpers/socket'
 
 
 const Message = ({convoId}) => {
@@ -50,10 +50,11 @@ const Message = ({convoId}) => {
 
       const payload = {
         convoId,
-        userId,
-        message,
+        sender: userId,
+        text: message,
         media: selectedFile || null,
-        isRead: false
+        isRead: false,
+        createdAt: new Date().toISOString()
       }
 
       const res = await fetch(SummaryApi.sendMessage.url, {
@@ -67,6 +68,9 @@ const Message = ({convoId}) => {
       const resData = await res.json();
       if(resData.success){
         toast.success(resData.message)
+        // Emit live events to other clients
+        socket.emit("sendMessage", payload)
+        // setMessageList((prev)=>[...prev, payload])
       }
       else{
         toast.warning(resData.message)
@@ -109,6 +113,13 @@ const Message = ({convoId}) => {
     // if(convoId && !messageList){
       handleGetMessages()
     }
+
+    socket.on("receiveMessage", (data)=>{
+      if(data.convoId===convoId){
+        setMessageList((prev) => [...prev, data])
+      }
+    })
+    return () => socket.off("receiveMessage")
   }, [convoId])
   // }, [])
 
@@ -119,7 +130,7 @@ const Message = ({convoId}) => {
 
 
   return (
-    <section className='w-full h-[99vh] max-h-screen flex flex-col  rounded-lg border shadow-sm'>
+    <section className='w-full h-[99vh] max-h-screen flex flex-col  rounded-lg border border-slate-400 shadow-sm'>
       {/* Header */}
       <header className='h-16 w-full px-4 py-3 flex justify-between items-center bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 rounded-t-lg'>
         <div className='flex items-center gap-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors'>

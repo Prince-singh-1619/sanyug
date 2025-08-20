@@ -13,6 +13,9 @@ async function addUserToChatController(req, res){
             isGroup: false,
             participants: { $all: participants, $size: 2 }
         }).populate('participants', '-password');
+        if(conversation){
+            res.status(200).json({message:"User already exists", success: true})
+        }
 
         if (!conversation) {
         // Create new conversation

@@ -2,16 +2,16 @@ const messageModel = require("../../model/messageModel")
 
 async function storeMessageController(req, res){
     try {
-        const {convoId, userId, message, media, isRead} = req.body
+        const {convoId, sender, text, media, isRead} = req.body
 
         if(!convoId) throw new Error("ConversationId is required")
-        if(!userId) throw new Error("userId is required")
-        if(!message) throw new Error("please enter a message")
+        if(!sender) throw new Error("userId is required")
+        if(!text) throw new Error("please enter a message")
 
         const newMessage = new messageModel({
             conversationId: convoId,
-            sender: userId,
-            text: message,
+            sender,
+            text,
             media: media || null,
             isRead: isRead || false
         })
