@@ -47,7 +47,16 @@ io.on("connection", (socket)=>{
         console.log("message received", data)
         // send to all clients
         io.emit("receiveMessage", data)
+        io.emit("updatedConvoList", {
+            convoId: data.convoId,
+            lastMessage: data.text,
+            createdAt: data.createdAt,
+        });
     })
+    // // update conversation list 
+    // socket.on("newConvo", (data)=>{
+    //     io.emit("updatedConvoList", data)
+    // })
     socket.on("disconnect", ()=>{
         console.log("user disconnected", socket.id)
     })

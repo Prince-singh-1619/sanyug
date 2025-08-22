@@ -7,10 +7,12 @@ const connectDB = async() =>{
         await mongoose.connect(process.env.MONGODB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
+            ssl: true,
+            tlsAllowInvalidCertificates: false
         })
-        // console.log("MongoDB connected")
+        console.log("MongoDB connected")
     } catch (err) {
-        console.log("Error connecting to DB", err)
+        console.log("MongoDB connection error: ", err)
     }
 }
 

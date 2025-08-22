@@ -15,13 +15,13 @@ import { AiOutlineSelect } from 'react-icons/ai';
 import socket from '../helpers/socket'
 
 
-const Message = ({convoId}) => {
+const Message = ({activeChat}) => {
   const [message, setMessage] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [messageList, setMessageList] = useState([])
   // const list = messageList
   
-
+  const convoId = activeChat.convoId
   const userData = JSON.parse(localStorage.getItem("userData"))
   const userId = userData?.userId
   
@@ -123,6 +123,24 @@ const Message = ({convoId}) => {
   }, [convoId])
   // }, [])
 
+  const formatChatTimestamp = (dateString) =>{
+    const date = new Date(dateString);
+    const now = new Date();
+
+    // Helper to zero out time for date comparison
+    const stripTime = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+    const today = stripTime(now);
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const messageDate = stripTime(date);
+
+    // if (messageDate.getTime() === today.getTime()) {
+      // Today → show time
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    // }
+  }
+
   console.log("sender:", messageList?.sender)
   console.log("userId:", userId)
   const me = messageList?.sender===userId ? true : false
@@ -134,9 +152,9 @@ const Message = ({convoId}) => {
       {/* Header */}
       <header className='h-16 w-full px-4 py-3 flex justify-between items-center bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 rounded-t-lg'>
         <div className='flex items-center gap-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors'>
-          <img src={dummyDp} alt='Profile' className='w-10 h-10 object-cover rounded-full border-2 border-gray-200 dark:border-gray-600' />
+          <img src={activeChat.profilePic || dummyDp} alt='Profile' className='w-10 h-10 object-cover rounded-full border-2 border-gray-200 dark:border-gray-600' />
           <div className='flex flex-col'>
-            <p className='font-semibold text-gray-900 dark:text-white text-sm'>Prince Singh</p>
+            <p className='font-semibold text-gray-900 dark:text-white text-sm'>{activeChat.name}</p>
             <span className='text-xs text-green-600 dark:text-green-400 flex items-center gap-1'>
               <div className='w-2 h-2 bg-green-500 rounded-full'></div>
               Online
@@ -171,12 +189,13 @@ const Message = ({convoId}) => {
          </div>
         }
 
-        <div className={`w-full h-full flex flex-col `}>
+        <div className={`w-full h-full flex flex-col mt-2 mb-6`}>
           {messageList.map((data, index)=>{
             return(
-              <p key={index} className={`text-lg font-medium mb-2 px-2 ${data.sender===userId?'place-items-end':'place-items-start'} `}>
-                <div className={`w-fit max-w-[80%] h-fit border py-1 px-2 rounded-lg  ${data.sender===userId ? 'rounded-br-none':'rounded-bl-none'} bg-green-600 bg-opacity-50`}>{data.text}</div>
-              </p>
+              <div key={index} className={`flex flex-col  mb-2 px-2 ${data.sender===userId?'place-items-end':'place-items-start'} `}>
+                <p className={`w-fit max-w-[80%] h-fit text-lg font-medium border py-1 px-2 rounded-lg  ${data.sender===userId ? 'rounded-br-none':'rounded-bl-none'} bg-green-600 bg-opacity-50`}>{data.text}</p>
+                <span className='text-xs opacity-85 mr-1 flex place-items-end'>{formatChatTimestamp(data.createdAt)}</span>
+              </div>
             )
           })}
         </div>

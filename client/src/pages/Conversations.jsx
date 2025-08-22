@@ -15,6 +15,7 @@ import SummaryApi from '../helpers/SummaryApi'
 import Sidebar from '../components/Sidebar'
 import { AiOutlineSelect } from "react-icons/ai";
 import ResizableDiv from '../helpers/ResizableDiv'
+import socket from '../helpers/socket'
 
 
 
@@ -23,10 +24,11 @@ const Conversations = () => {
     const userId = userData?.userId
 
     const [convoList, setConvoList] = useState([])
-console.log("first")
-    // const [activeChatIdx, setActiveChatIdx] = useState(-1)
+    const [activeChat, setActiveChat] = useState([])
     // const [activeChatIdx, setActiveChatIdx] = useState(0)
     const [activeConvoId, setActiveConvoId] = useState(0)
+    const loadingArray = new Array(5).fill(null)
+    // const [loading, setLoading] = useState(true)
     
     // const convoList = [
     //     {
@@ -607,7 +609,6 @@ console.log("first")
     ]
         
 
-
     const formatChatTimestamp = (dateString) =>{
         const date = new Date(dateString);
         const now = new Date();
@@ -634,82 +635,95 @@ console.log("first")
 
     const fetchAllChats = async() =>{
         console.log("fetching chats")
-        const allConvo = dummyArr.map(convo => {
-            if (convo.isGroup) {
-                // Group chat display
-                return {
-                    convoId: convo._id,
-                    name: convo.groupName,
-                    profilePic: convo.groupImage || '/default-group.png',
-                    lastMessage: convo.lastMessage?.text || '',
-                    createdAt: formatChatTimestamp(convo.lastMessage?.createdAt)
-                };
-            } else {
-                // One-to-one chat
-                const otherUser = convo.participants.find(p => p._id !== userId); // assuming you already filtered out logged-in user
-                return {
-                    convoId: convo._id,
-                    name: `${otherUser.firstName} ${otherUser.lastName}`,
-                    profilePic: otherUser.profilePic || '/default-user.png',
-                    lastMessage: convo.lastMessage?.text || '',
-                    createdAt: formatChatTimestamp(convo.lastMessage?.createdAt)
-                };
-            }
-        });
-        setConvoList(allConvo)
-
-        // try {
-        //     const res = await fetch(`${SummaryApi.fetchConvos.url}?userId=${userId}`, {
-        //         method: SummaryApi.fetchConvos.method,
-        //         headers: {
-        //             'Content-Type': 'application/json',
-        //         },
-        //     });
-
-        //     if (!res.ok) {
-        //         throw new Error('Failed to fetch chats');
+        // const allConvo = dummyArr.map(convo => {
+        //     if (convo.isGroup) {
+        //         // Group chat display
+        //         return {
+        //             convoId: convo._id,
+        //             name: convo.groupName,
+        //             profilePic: convo.groupImage || '/default-group.png',
+        //             lastMessage: convo.lastMessage?.text || '',
+        //             createdAt: formatChatTimestamp(convo.lastMessage?.createdAt)
+        //         };
+        //     } else {
+        //         // One-to-one chat
+        //         const otherUser = convo.participants.find(p => p._id !== userId); // assuming you already filtered out logged-in user
+        //         return {
+        //             convoId: convo._id,
+        //             name: `${otherUser.firstName} ${otherUser.lastName}`,
+        //             profilePic: otherUser.profilePic || '/default-user.png',
+        //             lastMessage: convo.lastMessage?.text || '',
+        //             createdAt: formatChatTimestamp(convo.lastMessage?.createdAt)
+        //         };
         //     }
+        // });
+        // setConvoList(allConvo)
 
-        //     const resData = await res.json();
+        try {
+            const res = await fetch(`${SummaryApi.fetchConvos.url}?userId=${userId}`, {
+                method: SummaryApi.fetchConvos.method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
 
-        //     const allConvo = resData.data.map(convo => {
-        //         if (convo.isGroup) {
-        //             // Group chat display
-        //             return {
-        //                 convoId: convo._id,
-        //                 name: convo.groupName,
-        //                 profilePic: convo.groupImage || '/default-group.png',
-        //                 lastMessage: convo.lastMessage?.text || '',
-        //                 createdAt: formatChatTimestamp(convo.lastMessage?.createdAt)
-        //             };
-        //         } else {
-        //             // One-to-one chat
-        //             const otherUser = convo.participants.find(p => p._id !== userId); // assuming you already filtered out logged-in user
-        //             return {
-        //                 convoId: convo._id,
-        //                 name: `${otherUser.firstName} ${otherUser.lastName}`,
-        //                 profilePic: otherUser.profilePic || '/default-user.png',
-        //                 lastMessage: convo.lastMessage?.text || '',
-        //                 createdAt: formatChatTimestamp(convo.lastMessage?.createdAt)
-        //             };
-        //         }
-        //     });
+            if (!res.ok) {
+                throw new Error('Failed to fetch chats');
+            }
 
-        //     setConvoList(allConvo); // update state
-        //     console.log("convo list: ", resData)
-        // } catch (error) {
-        //     console.error("Error fetching convos", error)
-        // }
+            const resData = await res.json();
+
+            const allConvo = resData.data.map(convo => {
+                if (convo.isGroup) {
+                    // Group chat display
+                    return {
+                        convoId: convo._id,
+                        name: convo.groupName,
+                        profilePic: convo.groupImage || '/default-group.png',
+                        lastMessage: convo.lastMessage?.text || '',
+                        createdAt: formatChatTimestamp(convo.lastMessage?.createdAt)
+                    };
+                } else {
+                    // One-to-one chat
+                    const otherUser = convo.participants.find(p => p._id !== userId); // assuming you already filtered out logged-in user
+                    return {
+                        convoId: convo._id,
+                        name: `${otherUser.firstName} ${otherUser.lastName}`,
+                        profilePic: otherUser.profilePic || '/default-user.png',
+                        lastMessage: convo.lastMessage?.text || '',
+                        createdAt: formatChatTimestamp(convo.lastMessage?.createdAt)
+                    };
+                }
+            });
+
+            setConvoList(allConvo); // update state
+            console.log("convo list: ", resData)
+        } catch (error) {
+            console.error("Error fetching convos", error)
+        }
     }
 
     useEffect(()=>{
        fetchAllChats()
     //    if(!convoList) fetchAllChats()
+
+        socket.on("updatedConvoList", (data)=>{
+            setConvoList((prev)=>{
+                // remove old entry
+                const filtered = prev.filter((c)=> c._id!==data.convoId)
+                return [{
+                    ...data, 
+                    _id: data.convoId
+                }, ...filtered]
+            })
+        })
+        return () => socket.off("updatedConvoList")
     }, [])
 
     const displayMessage = (index) =>{
         // setActiveChatIdx(index)
-        // console.log("chat index", activeChatIdx)
+        console.log("convoList displayMessage: ", convoList)
+        setActiveChat(convoList[index])
         const convoId = convoList[index].convoId
         setActiveConvoId(convoId)
         console.log("convoId", convoId)
@@ -727,18 +741,31 @@ console.log("first")
         <div className='w-9/10 h-10 rounded-full border border-slate-500 m-auto mt-4'>search bar</div>
         <div className=' flex flex-col justify-center py-2'>
             {!convoList.length && 
-                <div>
-                    {/* // show loading skeleton */}
-                    loading...
-                </div>
+                loadingArray.map((el,index)=>{
+                    return(
+                        <div key={index} className={`w-full h-18  my-auto border-t bg-gray-400 odd:bg-slate-600 animate-pulse`}>
+                            {/* <div className='h-[1px] w-full bg-slate-400'></div> */}
+                            <div className='h-full flex items-center justify-between px-2 animate-pulse'>
+                                <div className='flex items-center gap-2 justify-center animate-pulse'>
+                                    <div className='w-12 h-12 rounded-full bg-gray-500 animate-pulse'/>
+                                    <div className=''>
+                                        <p className='text-lg font-lg h-4 w-28 bg-gray-500 animate-pulse'></p>
+                                        <span className='opacity-90 h-4 w-16 bg-gray-500 animate-pulse '></span>
+                                    </div>
+                                </div>
+                                <div className='opacity-90 font-sm text-xs w-6 h-2 animate-pulse'></div>
+                            </div>
+                        </div>    
+                    )
+                })
             }
             {convoList.map((data, index)=>{
                 return(
-                    <div key={index} onClick={()=>displayMessage(index)} className={`h-18  my-auto cursor-pointer hover:bg-gray-500 ${activeConvoId===data.convoId ? 'bg-gray-500 text-slate-100':''}`}>
-                        <div className='h-[1px] w-full bg-slate-400'></div>
-                        <div className='flex items-center justify-between px-4 my-2'>
+                    <button key={index} onClick={()=>displayMessage(index)} className={`h-18 my-auto cursor-pointer border-t border-slate-400 hover:bg-gray-500 ${activeConvoId===data.convoId ? 'bg-gray-500 text-slate-100':''}`}>
+                        {/* <div className='h-[1px] w-full bg-slate-400'></div> */}
+                        <div className='flex items-center justify-between px-2 '>
                             <div className='flex items-center gap-2 justify-center'>
-                                <img src={data.profilePic.length ? data.profilePic : dummyDp} alt={data.name} className='w-12 h-12 rounded-full bg-red-200 object-cover'/>
+                                <img src={data.profilePic.length ? data.profilePic : dummyDp} alt={data.name} className='w-12 h-12 rounded-full object-cover'/>
                                 {/* <i><FaEye/></i> */}
                                 <div className=''>
                                     <p className='text-lg font-lg'>{data.name}</p>
@@ -747,7 +774,7 @@ console.log("first")
                             </div>
                             <div className='opacity-90 font-sm text-xs'>{data.createdAt}</div>
                         </div>
-                    </div>        
+                    </button>        
                 )
             })}
 
@@ -759,7 +786,10 @@ console.log("first")
       <section className='w-3/4'>
             {/* message area */}
             {activeConvoId ? 
-                <Message convoId={activeConvoId}/> : 
+                <Message 
+                    // convoId={activeConvoId}
+                    activeChat={activeChat}
+                /> : 
                 <div className='flex flex-col items-center justify-center h-full text-center'>
                     <div className='w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4'>
                         <AiOutlineSelect className='text-2xl text-gray-500 dark:text-gray-400' />
