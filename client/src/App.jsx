@@ -2,7 +2,7 @@ import './App.css'
 import Register from './pages/Register'
 import ThemeToggle from './components/ThemeToggle'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { ToastContainer } from 'react-toastify'
+import { Slide, ToastContainer } from 'react-toastify'
 import Login from './pages/Login'
 import ForgotPassword from './pages/ForgotPassword'
 import Home from './pages/Home'
@@ -15,7 +15,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      <ToastContainer />
+      <ToastContainer position='top-center' hideProgressBar={true} transition={Slide} autoClose={3000} toastClassName="!max-w-[80vw] text-sm md:text-base break-words" bodyClassName="flex items-center" />
       {/* <ThemeToggle /> */}
       <main className='px-2 py-1 max-h-screen'>
         {/* <Header /> */}

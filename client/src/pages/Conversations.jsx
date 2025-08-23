@@ -737,13 +737,13 @@ const Conversations = () => {
         <Sidebar/>
       </section>
 
-      <ResizableDiv className='h-[99vh] w-1/4 min-w-1/5 max-w-1/2 overflow-y-scroll border border-slate-400 rounded-lg'>
+      <ResizableDiv className='h-[99vh] w-1/4 min-w-1/5 max-w-1/2 overflow-y-scroll scrollbar-hide border border-slate-400 rounded-lg'>
         <div className='w-9/10 h-10 rounded-full border border-slate-500 m-auto mt-4'>search bar</div>
         <div className=' flex flex-col justify-center py-2'>
             {!convoList.length && 
                 loadingArray.map((el,index)=>{
                     return(
-                        <div key={index} className={`w-full h-18  my-auto border-t bg-gray-400 odd:bg-slate-600 animate-pulse`}>
+                        <div key={index} className={`w-full h-18  my-auto border-t bg-gray-400 odd:bg-slate-400 `}>
                             {/* <div className='h-[1px] w-full bg-slate-400'></div> */}
                             <div className='h-full flex items-center justify-between px-2 animate-pulse'>
                                 <div className='flex items-center gap-2 justify-center animate-pulse'>
@@ -767,9 +767,9 @@ const Conversations = () => {
                             <div className='flex items-center gap-2 justify-center'>
                                 <img src={data.profilePic.length ? data.profilePic : dummyDp} alt={data.name} className='w-12 h-12 rounded-full object-cover'/>
                                 {/* <i><FaEye/></i> */}
-                                <div className=''>
-                                    <p className='text-lg font-lg'>{data.name}</p>
-                                    <span className='opacity-90'>{data.lastMessage}</span>
+                                <div className='flex flex-col items-start'>
+                                    <p className='text-lg font-lg capitalize'>{data.name}</p>
+                                    <span className='opacity-75 ml-1 text-sm'>Hola</span>
                                 </div>
                             </div>
                             <div className='opacity-90 font-sm text-xs'>{data.createdAt}</div>

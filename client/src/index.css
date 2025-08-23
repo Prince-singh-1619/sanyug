@@ -84,3 +84,24 @@
 .animate-slide-in {
   animation: slide-in 0.3s ease-out forwards;
 }
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.combine-bg-main{
+  background-color: #d1d5db
+}
+.dark .combine-bg-main{
+  background-color: #1f2937;
+}
+.combine-bg-2{
+  background-color: #d1d5db
+}
+.dark .combine-bg-2{
+  background-color: #1f2937;
+}

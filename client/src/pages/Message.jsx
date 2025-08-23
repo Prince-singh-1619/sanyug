@@ -13,6 +13,9 @@ import TextOutline from '../helpers/TextOutline';
 import { HiRefresh } from "react-icons/hi";
 import { AiOutlineSelect } from 'react-icons/ai';
 import socket from '../helpers/socket'
+import dayjs from "dayjs";
+import calendar from "dayjs/plugin/calendar";
+dayjs.extend(calendar);
 
 
 const Message = ({activeChat}) => {
@@ -109,7 +112,7 @@ const Message = ({activeChat}) => {
   }
 
   useEffect(()=>{
-    if(convoId ){
+    if(activeChat ){
     // if(convoId && !messageList){
       handleGetMessages()
     }
@@ -120,7 +123,7 @@ const Message = ({activeChat}) => {
       }
     })
     return () => socket.off("receiveMessage")
-  }, [convoId])
+  }, [activeChat])
   // }, [])
 
   const formatChatTimestamp = (dateString) =>{
@@ -140,11 +143,22 @@ const Message = ({activeChat}) => {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     // }
   }
+  function groupMessagesByDate(messages) {
+    const grouped = {};
 
-  console.log("sender:", messageList?.sender)
-  console.log("userId:", userId)
-  const me = messageList?.sender===userId ? true : false
-  console.log("me: ", me)
+    messages.forEach((msg) => {
+      const dateKey = dayjs(msg.createdAt).format("YYYY-MM-DD");
+      if (!grouped[dateKey]) grouped[dateKey] = [];
+      grouped[dateKey].push(msg);
+    });
+
+    return grouped;
+  }
+
+  // console.log("sender:", messageList?.sender)
+  // console.log("userId:", userId)
+  // const me = messageList?.sender===userId ? true : false
+  // console.log("me: ", me)
 
 
   return (
@@ -154,7 +168,7 @@ const Message = ({activeChat}) => {
         <div className='flex items-center gap-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors'>
           <img src={activeChat.profilePic || dummyDp} alt='Profile' className='w-10 h-10 object-cover rounded-full border-2 border-gray-200 dark:border-gray-600' />
           <div className='flex flex-col'>
-            <p className='font-semibold text-gray-900 dark:text-white text-sm'>{activeChat.name}</p>
+            <p className='font-semibold text-gray-900 dark:text-white text-sm capitalize'>{activeChat.name}</p>
             <span className='text-xs text-green-600 dark:text-green-400 flex items-center gap-1'>
               <div className='w-2 h-2 bg-green-500 rounded-full'></div>
               Online
@@ -189,7 +203,7 @@ const Message = ({activeChat}) => {
          </div>
         }
 
-        <div className={`w-full h-full flex flex-col mt-2 mb-6`}>
+        {/* <div className={`w-full h-full flex flex-col mt-2 mb-6 `}>
           {messageList.map((data, index)=>{
             return(
               <div key={index} className={`flex flex-col  mb-2 px-2 ${data.sender===userId?'place-items-end':'place-items-start'} `}>
@@ -198,6 +212,49 @@ const Message = ({activeChat}) => {
               </div>
             )
           })}
+        </div> */}
+
+        <div className="w-full h-full flex flex-col mt-2 mb-6">
+          {Object.entries(groupMessagesByDate(messageList)).map(([date, msgs]) => (
+            <div key={date}>
+              {/* Date Divider */}
+              <div className="flex justify-center my-3">
+                <span className="combine-bg-2 px-3 py-1 rounded text-xs">
+                  {dayjs(date).calendar(null, {
+                    sameDay: "[Today]",
+                    lastDay: "[Yesterday]",
+                    lastWeek: "dddd",
+                    sameElse: "DD MMM YYYY",
+                  })}
+                </span>
+              </div>
+
+              {/* Messages */}
+              {msgs.map((data, index) => (
+                <div
+                  key={index}
+                  className={`flex flex-col mb-2 px-2 ${
+                    data.sender === userId
+                      ? "place-items-end"
+                      : "place-items-start"
+                  }`}
+                >
+                  <p
+                    className={`w-fit max-w-[80%] h-fit text-lg font-medium border py-1 px-2 rounded-lg ${
+                      data.sender === userId
+                        ? "rounded-br-none"
+                        : "rounded-bl-none"
+                    } bg-green-600 bg-opacity-50`}
+                  >
+                    {data.text}
+                  </p>
+                  <span className="text-xs opacity-85 mr-1 flex place-items-end">
+                    {formatChatTimestamp(data.createdAt)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       </div>
 
