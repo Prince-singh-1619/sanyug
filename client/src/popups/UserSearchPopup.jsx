@@ -8,9 +8,11 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResult, setSearchResult] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isAdding, setIsAdding] = useState(false)
   const [error, setError] = useState('')
   const popupRef = useRef(null)
 
+  const authToken = localStorage.getItem("authToken");
   const userData = JSON.parse(localStorage.getItem("userData"))
   const userId = userData?.userId
 
@@ -68,6 +70,7 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
         method: SummaryApi.searchUser.method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
         },
       })
 
@@ -91,12 +94,14 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
 
   const handleAddToChat = async() => {
     try {
+      setIsAdding(true)
       console.log("Adding user to chat")
 
       const res = await fetch(SummaryApi.addUserToChat.url, {
         method: SummaryApi.addUserToChat.method,
         headers:{
           'Content-type' : 'application/json',
+          'Authorization': `Bearer ${authToken}`,
         },
         body: JSON.stringify({
           participants: [userId, searchResult._id]
@@ -112,6 +117,7 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
 
       console.log('Conversation created/fetched:', data);
       onClose()
+      window.location.reload()  // reloads the page
 
       // Optionally update your state to show new conversation instantly
       // setConversations(prev => [...prev, data]);
@@ -119,6 +125,7 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
       console.error("Error adding to chat: ", error)
     } finally{
       setSearchQuery('')
+      setIsAdding(false)
       // onClose()
     }
   }
@@ -236,7 +243,12 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
                   className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-full transition-colors duration-200 cursor-pointer"
                   title="Add to chat"
                 >
-                  <MdPersonAdd className="w-5 h-5" />
+                  { isAdding ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <MdPersonAdd className="w-5 h-5" />
+                  ) }
+                  
                 </button>
               </div>
             </div>

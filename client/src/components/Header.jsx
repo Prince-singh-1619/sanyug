@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { IoMdMenu } from 'react-icons/io'
 import { MdPersonAddAlt1 } from 'react-icons/md'
 import ThemeToggle from './ThemeToggle'
-import UserSearchPopup from './UserSearchPopup'
+import UserSearchPopup from '../popups/UserSearchPopup'
 
 const Header = () => {
   const [isPopupOpen, setIsPopupOpen] = useState(false)

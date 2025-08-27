@@ -3,6 +3,8 @@ import { FaEye, FaEyeSlash, FaRegCheckCircle } from 'react-icons/fa'
 import SummaryApi from "../helpers/SummaryApi";
 import {toast} from 'react-toastify'
 import { Link, useNavigate } from "react-router-dom";
+import ThemeToggle from "../components/ThemeToggle";
+import GoogleLogin from "../components/GoogleLogin";
 // import { Link, useNavigate } from 'react-router-dom'
 
 const Register = () => {
@@ -161,12 +163,15 @@ const Register = () => {
 
   return (
     <section className='w-full h-full max-md:w-full flex justify-center items-center'>
+        <div className='absolute top-4 right-4'>
+          <ThemeToggle />
+        </div>
         <div className='w-1/2 flex flex-col gap-4'>
           <p className='text-8xl max-sm:text-5xl font-bold text-center tracking-widest'>Sanyug</p>
           <p className='text-5xl max-sm:text-3xl font-bold text-center opacity-75'>Create an account</p>
           
           {/* input profile data */}
-          <form onSubmit={handleSubmit} className='w-[90%] flex flex-col gap-4'>
+          <form onSubmit={handleSubmit} className='w-full flex flex-col gap-4'>
               <div className='flex gap-4'>
                   <input placeholder='First name' name='firstName' required className='input-field' value={form.firstName} onChange={handleOnChange}/>
                   <input placeholder='Last name' name='lastName' required className='input-field' value={form.lastName} onChange={handleOnChange} />
@@ -232,6 +237,18 @@ const Register = () => {
           <span>Already have an account?  
               <Link to='/login' className="active-link"> Log in </Link>
           </span>
+
+          {/* Divider */}
+          <div className='w-full flex items-center gap-4 my-2'>
+              <div className='flex-1 h-[1px] bg-slate-300 dark:bg-slate-600'></div>
+              <span className='text-slate-500 dark:text-slate-400 text-sm'>or</span>
+              <div className='flex-1 h-[1px] bg-slate-300 dark:bg-slate-600'></div>
+          </div>
+
+          {/* Google Login */}
+          <div className='w-full'>
+              <GoogleLogin/>
+          </div>
         </div>
 
     </section>

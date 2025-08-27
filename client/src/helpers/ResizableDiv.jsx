@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 
 const ResizableDiv = ({className="", children}) => {
   const divRef = useRef(null);
-  const [width, setWidth] = useState(300);
+  const [width, setWidth] = useState(400);
 
   const handleMouseDown = (e) => {
     const startX = e.clientX;
@@ -20,10 +20,10 @@ const ResizableDiv = ({className="", children}) => {
 
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
-};
+  };
 
   return (
-    <div ref={divRef} style={{ width: width}} className={`relative ${className}`}>
+    <div ref={divRef} style={{ width: width }} className={`relative ${className}`}>
         {children}
       {/* Custom handle on right mid */}
       <div onMouseDown={handleMouseDown} className="absolute top-1/2 right-0 w-2 h-10 cursor-ew-resize bg-gray-500 rounded-lg flex flex-col justify-around items-center">

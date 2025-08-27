@@ -10,20 +10,25 @@ const addUserToChatController = require('../controller/user/addUserToChat')
 const fetchConvoController = require('../controller/convo/fetchConvo')
 const storeMessageController = require('../controller/message/storeMessage')
 const fetchMessageController = require('../controller/message/fetchMessage')
+const deleteMessageController = require('../controller/message/deleteMessage')
+const authToken = require('../middleware/authToken')
+const googleAuthController = require('../controller/user/googleAuth')
 
 
 
 router.post('/send-otp', sendOtpController)
 router.post('/verify-otp', verifyOtpController)
-
 router.post('/register', signUpController)
 router.post('/login', loginController)
-router.get('/search-user', searchUserController)
-router.post('/conversations/add-user-to-chat', addUserToChatController)
-router.get('/fetch-convo', fetchConvoController)
+router.post('/auth/google', googleAuthController)
 
-router.post('/store-message', storeMessageController)
-router.get('/fetch-message', fetchMessageController)
+router.get('/search-user', authToken, searchUserController)
+router.post('/conversations/add-user-to-chat', authToken, addUserToChatController)
+router.get('/fetch-convo', authToken, fetchConvoController)
+
+router.post('/store-message', authToken, storeMessageController)
+router.get('/fetch-message', authToken, fetchMessageController)
+router.put('/remove-message', authToken, deleteMessageController)
 
 
 module.exports = router

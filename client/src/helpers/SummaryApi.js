@@ -17,6 +17,10 @@ const SummaryApi = {
         url:`${backendDomain}/api/login`,
         method: "POST"
     },
+    googleAuth:{
+        url:`${backendDomain}/api/auth/google`,
+        method: "POST"
+    },
     searchUser:{
         url:`${backendDomain}/api/search-user`,
         method: "GET"
@@ -36,6 +40,10 @@ const SummaryApi = {
     fetchMessage:{
         url:`${backendDomain}/api/fetch-message`,
         method: "GET"
+    },
+    deleteMessage:{
+        url:`${backendDomain}/api/remove-message`,
+        method: "PUT"
     },
     
 

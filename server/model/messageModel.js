@@ -35,7 +35,11 @@ const messageSchema = new mongoose.Schema({
     readBy: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
-    }]
+    }],
+    isRemoved:{
+        type: Boolean,
+        default: false
+    }
 }, { timestamps: true });
 
 const messageModel = mongoose.model('Message', messageSchema)

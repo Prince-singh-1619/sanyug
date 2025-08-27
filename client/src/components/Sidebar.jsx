@@ -5,7 +5,7 @@ import { TbProgress } from "react-icons/tb";
 import { CgProfile } from "react-icons/cg";
 import { Link } from 'react-router-dom';
 import { MdPersonAddAlt1 } from 'react-icons/md'
-import UserSearchPopup from './UserSearchPopup';
+import UserSearchPopup from '../popups/UserSearchPopup';
 import ThemeToggle from './ThemeToggle';
 import { LuPanelRightClose } from "react-icons/lu";
 import { LuPanelLeftClose } from "react-icons/lu";
@@ -65,6 +65,7 @@ const Sidebar = () => {
                 <div className="flex flex-col items-center gap-2">
                     <button
                         onClick={() => setIsPanelOpen(true)}
+                        title='Menu'
                         className="flex flex-col justify-center items-center w-8 h-8 rounded-lg bg-transparent hover:bg-slate-500 hover:text-white"
                     >
                         {/* <i className="text-2xl"><IoMdMenu /></i> */}
@@ -73,30 +74,31 @@ const Sidebar = () => {
 
                     <div className="h-[1px] w-full bg-slate-600 my-1"></div>
 
-                    <Link to="/status" className="flex flex-col justify-center items-center w-8 h-8 rounded-lg bg-transparent hover:bg-slate-500 hover:text-white">
+                    <Link to="/conversations" title='chats' className="flex flex-col justify-center items-center w-8 h-8 rounded-lg bg-transparent hover:bg-slate-500 hover:text-white">
                         <i className="text-2xl"><MdOutlineMessage /></i>
                     </Link>
 
-                    <Link to="/progress" className="flex flex-col justify-center items-center w-8 h-8 rounded-lg bg-transparent hover:bg-slate-500 hover:text-white">
+                    <Link to="/status" title='status' className="flex flex-col justify-center items-center w-8 h-8 rounded-lg bg-transparent hover:bg-slate-500 hover:text-white">
                         <i className="text-2xl"><TbProgress /></i>
                     </Link>
                 </div>
 
                 <div className="flex flex-col items-center gap-2">
-                    <div className="flex flex-col justify-center items-center w-8 h-8 rounded-lg bg-transparent hover:bg-slate-500 hover:text-white">
+                    <div title='Dark/Light Mode' className="flex flex-col justify-center items-center w-8 h-8 rounded-lg bg-transparent hover:bg-slate-500 hover:text-white">
                         <ThemeToggle />
                     </div>
                     <button
                         onClick={handleOpenPopup}
+                        title='Add to Chat'
                         className="flex flex-col justify-center items-center w-8 h-8 rounded-lg text-2xl bg-green-400 dark:text-black hover:bg-green-500 transition-colors duration-200 cursor-pointer"
                     >
                         <MdPersonAddAlt1 />
                     </button>
                     <div className="h-[1px] w-full bg-slate-600 my-1"></div>
-                    <Link to="/my-profile" className="flex flex-col justify-center items-center w-8 h-8 rounded-lg bg-transparent hover:bg-slate-500 hover:text-white">
+                    <Link to="/my-profile" title='Profile' className="flex flex-col justify-center items-center w-8 h-8 rounded-lg bg-transparent hover:bg-slate-500 hover:text-white">
                         <i className="text-2xl"><CgProfile /></i>
                     </Link>
-                    <Link to="/setting" className="flex flex-col justify-center items-center w-8 h-8 rounded-lg bg-transparent hover:bg-slate-500 hover:text-white">
+                    <Link to="/setting" title='Settings' className="flex flex-col justify-center items-center w-8 h-8 rounded-lg bg-transparent hover:bg-slate-500 hover:text-white">
                         <i className="text-2xl"><MdOutlineSettings /></i>
                     </Link>
                 </div>

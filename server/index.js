@@ -39,25 +39,56 @@ const io = new Server(server, {
     }
 })
 
+// for controllers
+app.set("io", io);
+
+const userStatus = {};
+function setUserStatus(userId, status, lastSeen=null){
+    userStatus[userId] = {status, lastSeen};
+    console.log(("user status updated: ", userId, userStatus[userId]))
+}
+
 // socket events
 io.on("connection", (socket)=>{
     console.log("user connected", socket.id)
+    const userId = socket.handshake.query.userId;
+    // Mark user online
+    setUserStatus(userId, "online");
+    // Notify others
+    io.emit("userStatus", { userId, status: "online" });
+
     // when client sends message
     socket.on("sendMessage", (data)=>{
         console.log("message received", data)
         // send to all clients
         io.emit("receiveMessage", data)
+        // io.emit("updatedConvoList", {
+        //     convoId: data.convoId,
+        //     lastMessage: data.text,
+        //     createdAt: data.createdAt,
+        // });
+    })
+    // // update conversation list 
+    socket.on("newConvo", (data)=>{
         io.emit("updatedConvoList", {
             convoId: data.convoId,
             lastMessage: data.text,
             createdAt: data.createdAt,
         });
     })
-    // // update conversation list 
-    // socket.on("newConvo", (data)=>{
-    //     io.emit("updatedConvoList", data)
-    // })
+    socket.on("typing", ({convoId, userId})=>{
+        socket.to(convoId).emit("typing", {userId});
+    })
+    socket.on("stopTyping", ({convoId, userId})=>{
+        socket.to(convoId).emit("stopTyping", {userId})
+    })
+    socket.on("joinRoom", (convoId)=>{
+        socket.join(convoId);
+        console.log(`user ${socket.id} joined convo ${convoId}`)
+    })
     socket.on("disconnect", ()=>{
+        setUserStatus(userId, "offline", Date.now());
+        io.emit("userStatus", {userId, status:"offline", lastSeen:Date.now() })
         console.log("user disconnected", socket.id)
     })
 })

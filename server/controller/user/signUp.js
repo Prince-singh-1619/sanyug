@@ -31,7 +31,8 @@ async function signUpController(req, res){
             username,
             email,
             password: hashedPassword,
-            isVerified: true
+            isVerified: true,
+            
         }
 
         const newUser = new userModel(payload)

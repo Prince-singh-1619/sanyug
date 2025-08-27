@@ -7,6 +7,7 @@ const MyProfile = () => {
 
     const handleLogout = () =>{
         localStorage.removeItem("userData")
+        localStorage.removeItem("authToken")
         toast.success("Logged out successfully")
         navigate('/login')
     }

@@ -31,8 +31,7 @@ const ThemeToggle = () => {
     }
 
     return (
-        // <button onClick={themeHandler} className="p-2 w-12 h-12 rounded-full flex justify-center
-        // items-center bg-slate-200 dark:bg-[#1a1a1a] text-gray-900 dark:text-gray-100 cursor-pointer">
+        // <button onClick={themeHandler} className="p-2 w-12 h-12 rounded-full flex justify-center items-center bg-slate-200 dark:bg-[#1a1a1a] text-gray-900 dark:text-gray-100 cursor-pointer">
         //     {isDark ? <MdLightMode size={24} /> : <MdDarkMode size={24} />}
         // </button>
         <button onClick={themeHandler} className="flex justify-center items-center cursor-pointer">

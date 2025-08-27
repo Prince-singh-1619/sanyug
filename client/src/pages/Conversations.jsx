@@ -16,19 +16,27 @@ import Sidebar from '../components/Sidebar'
 import { AiOutlineSelect } from "react-icons/ai";
 import ResizableDiv from '../helpers/ResizableDiv'
 import socket from '../helpers/socket'
-
+import { Outlet, useNavigate, useOutlet } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
+import { setActiveChat } from '../redux/slices/chatSlice'
 
 
 const Conversations = () => {
+    const authToken = localStorage.getItem("authToken");
     const userData = JSON.parse(localStorage.getItem("userData"))
     const userId = userData?.userId
 
     const [convoList, setConvoList] = useState([])
-    const [activeChat, setActiveChat] = useState([])
-    // const [activeChatIdx, setActiveChatIdx] = useState(0)
-    const [activeConvoId, setActiveConvoId] = useState(0)
+    // const [activeChat, setActiveChat] = useState([])
+    // const [activeChatIdx, setActiveChatIdx] = useState(-1)
+    // const [activeConvoId, setActiveConvoId] = useState(0)
+    const { activeConvoId } = useSelector(state => state.chat);
+    const [loading, setLoading] = useState(false)
     const loadingArray = new Array(5).fill(null)
     // const [loading, setLoading] = useState(true)
+    const navigate = useNavigate()
+    const outlet = useOutlet()
+    const dispatch = useDispatch()
     
     // const convoList = [
     //     {
@@ -622,13 +630,11 @@ const Conversations = () => {
         const messageDate = stripTime(date);
 
         if (messageDate.getTime() === today.getTime()) {
-            // Today → show time
             return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         } else if (messageDate.getTime() === yesterday.getTime()) {
-            // Yesterday
             return 'Yesterday';
         } else {
-            // Older → show date
+            // Older -> show date
             return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
         }
     }
@@ -660,10 +666,12 @@ const Conversations = () => {
         // setConvoList(allConvo)
 
         try {
+            setLoading(true)
             const res = await fetch(`${SummaryApi.fetchConvos.url}?userId=${userId}`, {
                 method: SummaryApi.fetchConvos.method,
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
                 },
             });
 
@@ -681,6 +689,7 @@ const Conversations = () => {
                         name: convo.groupName,
                         profilePic: convo.groupImage || '/default-group.png',
                         lastMessage: convo.lastMessage?.text || '',
+                        // lastSeen: convo.lastSeen,
                         createdAt: formatChatTimestamp(convo.lastMessage?.createdAt)
                     };
                 } else {
@@ -691,6 +700,7 @@ const Conversations = () => {
                         name: `${otherUser.firstName} ${otherUser.lastName}`,
                         profilePic: otherUser.profilePic || '/default-user.png',
                         lastMessage: convo.lastMessage?.text || '',
+                        lastSeen:  formatChatTimestamp(convo.lastSeen),
                         createdAt: formatChatTimestamp(convo.lastMessage?.createdAt)
                     };
                 }
@@ -700,8 +710,11 @@ const Conversations = () => {
             console.log("convo list: ", resData)
         } catch (error) {
             console.error("Error fetching convos", error)
+        } finally{
+            setLoading(false)
         }
     }
+    if(convoList) console.log("After resData: ", convoList)
 
     useEffect(()=>{
        fetchAllChats()
@@ -713,7 +726,8 @@ const Conversations = () => {
                 const filtered = prev.filter((c)=> c._id!==data.convoId)
                 return [{
                     ...data, 
-                    _id: data.convoId
+                    // _id: data.convoId
+                    convoId: data.convoId,
                 }, ...filtered]
             })
         })
@@ -723,9 +737,21 @@ const Conversations = () => {
     const displayMessage = (index) =>{
         // setActiveChatIdx(index)
         console.log("convoList displayMessage: ", convoList)
-        setActiveChat(convoList[index])
-        const convoId = convoList[index].convoId
-        setActiveConvoId(convoId)
+        const selectedChat = convoList[index];
+        if(!selectedChat) return 
+
+        const convoId = selectedChat.convoId
+        // setActiveChat(selectedChat)
+        // setActiveConvoId(convoId)
+        dispatch(setActiveChat({
+            chat: selectedChat,
+            convoId: selectedChat.convoId,
+        }))
+
+        
+        navigate(`/conversations/${convoId}`, 
+            {state: {activeChat:selectedChat}}
+        )
         console.log("convoId", convoId)
         console.log("activeConvoId", activeConvoId)
     }
@@ -738,70 +764,63 @@ const Conversations = () => {
       </section>
 
       <ResizableDiv className='h-[99vh] w-1/4 min-w-1/5 max-w-1/2 overflow-y-scroll scrollbar-hide border border-slate-400 rounded-lg'>
-        <div className='w-9/10 h-10 rounded-full border border-slate-500 m-auto mt-4'>search bar</div>
-        <div className=' flex flex-col justify-center py-2'>
-            {!convoList.length && 
-                loadingArray.map((el,index)=>{
+        <div className='w-full border-b border-slate-400 py-4'>
+            <div className='w-9/10 h-10 rounded-full border border-slate-500 m-auto'>search bar</div>
+        </div>
+        <div className=' flex flex-col justify-center'>
+            {loading ? (
+                loadingArray.map((el,index)=>{ return(
+                    <div key={el+index} className={`w-full h-18  my-auto border-b border-slate-400 odd:bg-slate-300 dark:odd:bg-slate-800`}>
+                        <div className='h-full flex items-center justify-between px-2 animate-pulse'>
+                            <div className='flex items-center gap-2 justify-center animate-pulse'>
+                                <div className='w-12 h-12 rounded-full bg-gray-500 animate-pulse'/>
+                                <div className='flex flex-col gap-2'>
+                                    <p className='text-lg font-lg h-4 w-28 bg-gray-500 animate-pulse'></p>
+                                    <span className='opacity-90 h-2 w-16 bg-gray-500 animate-bounce '></span>
+                                </div>
+                            </div>
+                            <div className='opacity-90 font-sm text-xs w-12 h-4 bg-gray-500 animate-bounce'></div>
+                        </div>
+                    </div>    
+                )})
+            ) : (
+                convoList.map((data, index)=>{
                     return(
-                        <div key={index} className={`w-full h-18  my-auto border-t bg-gray-400 odd:bg-slate-400 `}>
-                            {/* <div className='h-[1px] w-full bg-slate-400'></div> */}
-                            <div className='h-full flex items-center justify-between px-2 animate-pulse'>
-                                <div className='flex items-center gap-2 justify-center animate-pulse'>
-                                    <div className='w-12 h-12 rounded-full bg-gray-500 animate-pulse'/>
-                                    <div className=''>
-                                        <p className='text-lg font-lg h-4 w-28 bg-gray-500 animate-pulse'></p>
-                                        <span className='opacity-90 h-4 w-16 bg-gray-500 animate-pulse '></span>
+                        <button key={index} onClick={()=>displayMessage(index)} className={`h-18 my-auto cursor-pointer border-b border-slate-400 hover:bg-gray-500 ${activeConvoId===data.convoId ? 'bg-gray-400 dark:bg-gray-500 dark:text-slate-100 dark:text-':''}`}>
+                            <div className='flex items-center justify-between px-2 '>
+                                <div className='flex items-center gap-2 justify-center'>
+                                    <img src={data.profilePic ? data.profilePic : dummyDp} alt={data.name} className='w-12 h-12 rounded-full object-cover'/>
+                                    <div className='flex flex-col items-start'>
+                                        <p className='text-lg font-lg capitalize'>{data.name}</p>
+                                        <span className='opacity-75 ml-1 text-sm'>{data.lastMessage}</span>
                                     </div>
                                 </div>
-                                <div className='opacity-90 font-sm text-xs w-6 h-2 animate-pulse'></div>
+                                <div className='opacity-90 font-sm text-xs'>{data.createdAt}</div>
                             </div>
-                        </div>    
+                        </button>        
                     )
                 })
-            }
-            {convoList.map((data, index)=>{
-                return(
-                    <button key={index} onClick={()=>displayMessage(index)} className={`h-18 my-auto cursor-pointer border-t border-slate-400 hover:bg-gray-500 ${activeConvoId===data.convoId ? 'bg-gray-500 text-slate-100':''}`}>
-                        {/* <div className='h-[1px] w-full bg-slate-400'></div> */}
-                        <div className='flex items-center justify-between px-2 '>
-                            <div className='flex items-center gap-2 justify-center'>
-                                <img src={data.profilePic.length ? data.profilePic : dummyDp} alt={data.name} className='w-12 h-12 rounded-full object-cover'/>
-                                {/* <i><FaEye/></i> */}
-                                <div className='flex flex-col items-start'>
-                                    <p className='text-lg font-lg capitalize'>{data.name}</p>
-                                    <span className='opacity-75 ml-1 text-sm'>Hola</span>
-                                </div>
-                            </div>
-                            <div className='opacity-90 font-sm text-xs'>{data.createdAt}</div>
-                        </div>
-                    </button>        
-                )
-            })}
-
-            
-            
+            )}
         </div>
       </ResizableDiv>
 
-      <section className='w-3/4'>
-            {/* message area */}
-            {activeConvoId ? 
-                <Message 
-                    // convoId={activeConvoId}
-                    activeChat={activeChat}
-                /> : 
-                <div className='flex flex-col items-center justify-center h-full text-center'>
-                    <div className='w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4'>
-                        <AiOutlineSelect className='text-2xl text-gray-500 dark:text-gray-400' />
-                    </div>
-                    <p className='text-3xl font-medium mb-2'>
-                        Select a conversation
-                    </p>
-                    <p className='text-sm opacity-75 max-w-sm'>
-                        Choose a conversation from the sidebar to start messaging
-                    </p>
+      {/* message area */}
+      <section className='w-full flex-1'>
+        {outlet ? (
+            <Outlet/>
+        )  :(
+            <div className='flex flex-col items-center justify-center h-full text-center rounded-lg border border-slate-400 shadow-sm'>
+                <div className='w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4'>
+                    <AiOutlineSelect className='text-2xl text-gray-500 dark:text-gray-400' />
                 </div>
-            }
+                <p className='text-3xl font-medium mb-2'>
+                    Select a conversation
+                </p>
+                <p className='text-sm opacity-75 max-w-sm'>
+                    Choose a conversation from the sidebar to start messaging
+                </p>
+            </div>
+        )}
       </section>
     </section>
   )

@@ -1,4 +1,5 @@
 const messageModel = require("../../model/messageModel")
+const conversationModel = require("../../model/conversationModel")
 
 async function storeMessageController(req, res){
     try {
@@ -16,6 +17,13 @@ async function storeMessageController(req, res){
             isRead: isRead || false
         })
         const store = await newMessage.save()
+
+        //update last Message
+        const last = await conversationModel.findById(convoId)
+        if(!last) throw new Error("lastMessage couldn't be updated")
+        last.lastMessage.text=text
+        last.lastMessage.sender=sender
+        await last.save()
 
         return res.status(200).json({
             message: "Message stored successfully",
