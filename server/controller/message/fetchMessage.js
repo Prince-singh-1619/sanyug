@@ -7,14 +7,20 @@ async function fetchMessageController(req, res){
         if(!userId) throw new Error("userId is required")
 
         const messages = await messageModel.find({
-            // $or: [
-                // { 
-                    conversationId: convoId 
-                // }
-                // { sender: userId },
-                    // { receiver: userId } // only if you store receiverId
-            // ]
+            conversationId: convoId 
         }).sort({ createdAt: 1 }); // ascending order
+
+        await messageModel.updateMany(  //mark as delivered and read
+            {
+                conversationId: convoId,
+                readBy: { $ne: userId },
+                sender: { $ne: userId }
+            },
+            { $addToSet: { 
+                deliveredTo:userId, 
+                readBy: userId 
+            }}
+        )
 
         return res.status(200).json({
             message: "Messages fetched successfully",
@@ -22,7 +28,6 @@ async function fetchMessageController(req, res){
             success: true,
             error: false
         });
-
     }
     catch (error) {
         return res.status(400).json({

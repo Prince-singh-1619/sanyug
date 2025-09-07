@@ -19,6 +19,8 @@ import socket from '../helpers/socket'
 import { Outlet, useNavigate, useOutlet } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { setActiveChat } from '../redux/slices/chatSlice'
+import { MdOutlineAccessTime } from "react-icons/md";
+import MsgIndicator from '../components/MsgIndicator'
 
 
 const Conversations = () => {
@@ -688,8 +690,10 @@ const Conversations = () => {
                         convoId: convo._id,
                         name: convo.groupName,
                         profilePic: convo.groupImage || '/default-group.png',
-                        lastMessage: convo.lastMessage?.text || '',
+                        lastMsg: convo.lastMessage,
+                        // lastMessage: convo.lastMessage?.text || '',
                         // lastSeen: convo.lastSeen,
+                        sender: convo.lastMessage?.sender,
                         createdAt: formatChatTimestamp(convo.lastMessage?.createdAt)
                     };
                 } else {
@@ -699,7 +703,10 @@ const Conversations = () => {
                         convoId: convo._id,
                         name: `${otherUser.firstName} ${otherUser.lastName}`,
                         profilePic: otherUser.profilePic || '/default-user.png',
-                        lastMessage: convo.lastMessage?.text || '',
+                        lastMsg: convo.lastMessage,
+                        // lastMsgId: convo.lastMessage.msgId,
+                        // lastMessage: convo.lastMessage?.text || '',
+                        sender: convo.lastMessage?.sender,
                         lastSeen:  formatChatTimestamp(convo.lastSeen),
                         createdAt: formatChatTimestamp(convo.lastMessage?.createdAt)
                     };
@@ -773,7 +780,7 @@ const Conversations = () => {
                     <div key={el+index} className={`w-full h-18  my-auto border-b border-slate-400 odd:bg-slate-300 dark:odd:bg-slate-800`}>
                         <div className='h-full flex items-center justify-between px-2 animate-pulse'>
                             <div className='flex items-center gap-2 justify-center animate-pulse'>
-                                <div className='w-12 h-12 rounded-full bg-gray-500 animate-pulse'/>
+                                <div className='w-12 h-12 rounded-lg bg-gray-500 animate-pulse'/>
                                 <div className='flex flex-col gap-2'>
                                     <p className='text-lg font-lg h-4 w-28 bg-gray-500 animate-pulse'></p>
                                     <span className='opacity-90 h-2 w-16 bg-gray-500 animate-bounce '></span>
@@ -786,16 +793,22 @@ const Conversations = () => {
             ) : (
                 convoList.map((data, index)=>{
                     return(
-                        <button key={index} onClick={()=>displayMessage(index)} className={`h-18 my-auto cursor-pointer border-b border-slate-400 hover:bg-gray-500 ${activeConvoId===data.convoId ? 'bg-gray-400 dark:bg-gray-500 dark:text-slate-100 dark:text-':''}`}>
-                            <div className='flex items-center justify-between px-2 '>
-                                <div className='flex items-center gap-2 justify-center'>
-                                    <img src={data.profilePic ? data.profilePic : dummyDp} alt={data.name} className='w-12 h-12 rounded-full object-cover'/>
-                                    <div className='flex flex-col items-start'>
-                                        <p className='text-lg font-lg capitalize'>{data.name}</p>
-                                        <span className='opacity-75 ml-1 text-sm'>{data.lastMessage}</span>
+                        <button key={index} onClick={()=>displayMessage(index)} className={`h-18 my-auto cursor-pointer border-b border-slate-400 hover:bg-gray-500 ${activeConvoId===data.convoId ? 'bg-gray-400 dark:bg-gray-600 text-black dark:text-white':''}`}>
+                            <div className='w-full flex items-center justify-between px-2 '>
+                                <div className='w-full flex items-center gap-2 justify-center'>
+                                    <img src={data.profilePic ? data.profilePic : dummyDp} alt={data.name} className='w-12 h-12 rounded-lg object-cover'/>
+                                    <div className='w-full flex flex-col items-start'>
+                                        <div className='w-full flex items-center justify-between'>
+                                            <p className='text-lg font-lg capitalize'>{data.name}</p>
+                                            <span className='opacity-90 font-sm text-xs'>{data.createdAt}</span>
+                                        </div>
+                                        <div className='opacity-75 text-sm flex gap-2 items-center'>
+                                            {/* <i className='mt-[1px]'><MsgIndicator message={data.lastMsg} totalReceivers={1}/></i> */}
+                                            <span>{data.lastMsg.text}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className='opacity-90 font-sm text-xs'>{data.createdAt}</div>
+                                {/* <div className='opacity-90 font-sm text-xs'>{data.createdAt}</div> */}
                             </div>
                         </button>        
                     )
@@ -810,8 +823,8 @@ const Conversations = () => {
             <Outlet/>
         )  :(
             <div className='flex flex-col items-center justify-center h-full text-center rounded-lg border border-slate-400 shadow-sm'>
-                <div className='w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4'>
-                    <AiOutlineSelect className='text-2xl text-gray-500 dark:text-gray-400' />
+                <div className='w-16 h-16 bg-gray-400 dark:bg-gray-700 rounded-xl flex items-center justify-center mb-4'>
+                    <AiOutlineSelect className='text-2xl ' />
                 </div>
                 <p className='text-3xl font-medium mb-2'>
                     Select a conversation

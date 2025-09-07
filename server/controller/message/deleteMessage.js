@@ -12,7 +12,7 @@ async function deleteMessageController(req, res){
 
         if(!message) throw new Error("Message not found or not exists")
 
-        message.text = "This message has been deleted"
+        message.text = "Message Deleted"
         message.isRemoved = true
         await message.save()
 

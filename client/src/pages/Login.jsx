@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import ThemeToggle from '../components/ThemeToggle';
 import GoogleLogin from '../components/GoogleLogin';
+import socket from '../helpers/socket';
 
 const Login = () => {
     const [form, setForm] = useState({
@@ -50,7 +51,10 @@ const Login = () => {
             const data = await res.json()
             if(data.success) {
                 console.log("dataApi message from success: ", data.message)
-                localStorage.setItem("authToken", JSON.stringify(data.token));
+                socket.emit("join", data.user.userId) // join user room for socket
+
+                // localStorage.setItem("authToken", JSON.stringify(data.token));
+                localStorage.setItem("authToken", data.token);
                 localStorage.setItem("userData", JSON.stringify(data.user));
                 toast.success(data.message)
                 navigate("/")

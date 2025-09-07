@@ -32,6 +32,14 @@ const messageSchema = new mongoose.Schema({
             required: function () { return this.media?.type; }
         }
     },
+    totalReceivers: {
+        type: Number, 
+        required: true
+    },
+    deliveredTo: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
     readBy: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'

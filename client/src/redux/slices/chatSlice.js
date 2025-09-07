@@ -27,6 +27,41 @@ const chatSlice = createSlice({
                 msg._id === tempId ? { ...msg, _id:newId, isTemp:false } : msg
             );
         },
+
+
+        // Update a message when delivered
+        markMessageDelivered: (state, action) => {
+            const { msgId, userId } = action.payload;
+
+            for (const convoId in state.conversations) {
+                state.conversations[convoId] = state.conversations[convoId].map((msg) =>
+                msg._id === msgId
+                    ? {
+                        ...msg,
+                        deliveredTo: [...new Set([...(msg.deliveredTo || []), userId])]
+                    }
+                    : msg
+                );
+            }
+        },
+        // Update messages when read
+        markMessagesAsRead: (state, action) => {
+            const { convoId, userId } = action.payload;
+
+            if (state.conversations[convoId]) {
+                state.conversations[convoId] = state.conversations[convoId].map((msg) =>
+                msg.sender !== userId
+                    ? {
+                        ...msg,
+                        readBy: [...new Set([...(msg.readBy || []), userId])]
+                    }
+                    : msg
+                );
+            }
+        },
+
+
+
         setMessages: (state, action) =>{
             const {convoId, messages} = action.payload;
             state.messageList[convoId] = messages;
@@ -50,6 +85,8 @@ export const {
     setActiveChat, 
     addMessage, 
     updateTempMsgId, 
+    markMessageDelivered,
+    markMessagesAsRead,
     setMessages, 
     deleteMessage, 
     clearChatState 

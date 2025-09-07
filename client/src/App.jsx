@@ -11,11 +11,13 @@ import Message from './pages/Message'
 import Header from './components/Header'
 import MyProfile from './pages/MyProfile'
 // import { ThemeProvider } from './contexts/ThemeContext'
+import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
     // <ThemeProvider>
       <BrowserRouter>
+       <Toaster/> {/* for react-hot-toast */}
         <ToastContainer 
           position='top-center' 
           hideProgressBar={true} 

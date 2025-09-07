@@ -3,30 +3,34 @@ const jwt = require('jsonwebtoken')
 async function authToken(req, res, next){
     try {
         // const token = req.cookies?.token
-        const token = req.headers.authorization?.split(" ")[1]; // Extract token
+        const authHeader = req.headers.authorization // Extract token
+        const token = authHeader && authHeader.split(" ")[1];
         if(!token){
-            return res.status(200).json({
-                message: "Please Log in...",
+            return res.status(401).json({
+                message: "No token provided",
                 error: true, 
                 success: false
             })
         }
 
-        jwt.verify(token, process.env.TOKEN_SECRET_KEY, function(err, decoded){
-            console.log(err)
-            console.log("decoded", decoded)
+        jwt.verify(token, process.env.TOKEN_SECRET_KEY, (err, decoded) => {
+            if (err) {
+                console.error("JWT verification error:", err.message);
+                return res.status(401).json({
+                    message: "Invalid or expired token",
+                    success: false,
+                    error: true,
+                });
+            }
 
-            if(err) console.log("Error in authToken", err)
-
-            req.userId = decoded?._id
-            next()
-        })
+            req.userId = decoded._id || decoded.id; // use correct field
+            next();
+        });
 
     } 
     catch (err) {
-        res.status(400).json({
+        res.status(500).json({
             message: err.message || err,
-            data: [],
             success: false,
             error: true
         })    

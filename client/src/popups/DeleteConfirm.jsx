@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
 import SummaryApi from '../helpers/SummaryApi';
-import { toast } from 'react-toastify';
+// import { toast } from 'react-toastify';
 import { deleteMessage } from '../redux/slices/chatSlice';
 import { useDispatch, useSelector } from 'react-redux';
+import { toast } from 'react-hot-toast';
 
 const DeleteConfirm = ({msgId, open, setOpen}) => {
     console.log("msgId frontend: ", msgId)
@@ -22,17 +23,24 @@ const DeleteConfirm = ({msgId, open, setOpen}) => {
       console.log("deleting...", msgId)
       // setIsDeleting(true)
       try {
-        const res = await fetch(SummaryApi.deleteMessage.url, {
+        const res = await toast.promise(
+          fetch(SummaryApi.deleteMessage.url, {
           method: SummaryApi.deleteMessage.method,
           headers: { 
           "Content-Type": "application/json",
           'Authorization': `Bearer ${authToken}`,
           },
           body: JSON.stringify({ msgId }),
-        })
+        }), 
+          {
+            loading: "Deleting...",
+            success: "Message deleted",
+            error: "Failed to delete message"
+          }
+        );
         const resData = await res.json();
         if (resData.success) {
-          toast.success(resData.message)
+          // toast.success(resData.message)
           console.log(resData.message);
           // No need to update UI here, socket will handle it
           dispatch(deleteMessage({msgId, convoId:activeConvoId}))

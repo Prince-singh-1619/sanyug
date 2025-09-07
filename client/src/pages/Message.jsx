@@ -3,12 +3,11 @@ import dummyDp from '../assets/person-dummy.svg'
 import { SlOptionsVertical } from "react-icons/sl";
 import { LuTextSearch } from "react-icons/lu";
 import { TbCloudUpload } from "react-icons/tb";
-import { FaPersonWalkingArrowRight } from "react-icons/fa6";
 import { IoSend } from "react-icons/io5";
 import { BsEmojiSmile } from "react-icons/bs";
 import { MdAttachFile, MdDelete } from "react-icons/md";
 import SummaryApi from '../helpers/SummaryApi';
-import { toast } from 'react-toastify';
+// import { toast } from 'react-toastify';
 // import TextOutline from '../helpers/TextOutline';
 import { HiRefresh } from "react-icons/hi";
 import { AiOutlineSelect } from 'react-icons/ai';
@@ -19,10 +18,16 @@ import ChatDropdown from '../components/ChatDropdown';
 // import { useLocation } from 'react-router-dom';
 dayjs.extend(calendar);
 import { useDispatch, useSelector } from "react-redux";
-import { addMessage, setMessages, deleteMessage, updateTempMsgId } from "../redux/slices/chatSlice";
+import { addMessage, setMessages, deleteMessage, updateTempMsgId, markMessagesAsRead, markMessageDelivered } from "../redux/slices/chatSlice";
 import DeleteConfirm from '../popups/DeleteConfirm';
+import MsgIndicator from '../components/MsgIndicator';
+
+import { toast } from 'react-hot-toast';
+
 
 const Message = () => {
+  // const {convoId:urlConvoId} = useParams();
+  
   const [message, setMessage] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   // const [messageList, setMessageList] = useState([])
@@ -74,10 +79,14 @@ const Message = () => {
         _id: tempId,              // temporary id
         text: message,         // the message text
         sender: userId,           // current user
-        isTemp: true,             // mark as not confirmed yet
+        isTemp: true,   
+        deliveredTo: 0,
+        readBy: 0,          // mark as not confirmed yet
         createdAt: new Date().toISOString()
       }
     }));
+
+    // add redux to update convoList with last message and icon
 
     if (message.trim() || selectedFile) {
       console.log('Sending message:', message);
@@ -92,30 +101,36 @@ const Message = () => {
         // createdAt: new Date().toISOString()
       }
 
-      const res = await fetch(SummaryApi.sendMessage.url, {
+      setMessage('');
+      setSelectedFile(null);
+
+      // using react hot toast here
+      const res = await toast.promise( 
+        fetch(SummaryApi.sendMessage.url, {
         method: SummaryApi.sendMessage.method,
         headers:{
           'Content-type' : 'application/json',
           'Authorization': `Bearer ${authToken}`,
         },
         body: JSON.stringify(payload)
-      })
+        }), 
+        {
+          loading: "Sending...",
+          success: "Message sent",
+          error: "Failed to send message"
+        }
+      );
 
       const resData = await res.json();
       if(resData.success){
-        toast.success("done",resData.message)
+        // toast.success(resData.message)
         // Emit live events to other clients
         dispatch(updateTempMsgId({ convoId, tempId, newId:resData.data._id }));
-        socket.emit("sendMessage", payload)
-        
-        // setMessageList((prev)=>[...prev, payload])
+        // socket.emit("sendMessage", payload)
       }
       else{
-        toast.warning(resData.message)
+        // toast.warning(resData.message)
       }
-      
-      setMessage('');
-      setSelectedFile(null);
     }
   };
 
@@ -133,7 +148,7 @@ const Message = () => {
 
       const resData = await res.json()
       if(resData.success){
-        console.log("MessageList", resData.data)
+        console.log("MessageList from getMessages", resData.data)
         // setMessageList(resData.data)
         dispatch(setMessages({convoId, messages:resData.data})) //store in redux
         toast.success(resData.message)
@@ -153,17 +168,53 @@ const Message = () => {
     if(activeChat && convoId){
     // if(convoId && !messageList){
       handleGetMessages()
+      socket.emit("messageRead", {convoId, userId}) // mark all as read
     }
+  }, [convoId])
 
-    socket.on("receiveMessage", (data)=>{
-      if(data.convoId===convoId){
-        // setMessageList((prev) => [...prev, data])
-        dispatch(addMessage({convoId, message:data}))
-      }
+  // socket for live receiving
+  useEffect(() => {
+    socket.on("receiveMessage", (msg) => {
+      console.log("new msg received", msg)
+      dispatch(addMessage({ convoId: msg.conversationId, message: msg }));
+      // acknowledge delivery back to server
+      socket.emit("messageDelivered", { msgId: msg._id, userId })
     })
-    return () => socket.off("receiveMessage")
-  }, [activeChat])
-  // }, [])
+    return()=>{
+      socket.off("receiveMessage");
+    }
+  }, [dispatch, userId]);
+
+  useEffect(()=>{
+    socket.on("messageSent", (id)=>{
+      console.log("msg confirmed", id)
+    })
+    return()=>{
+      socket.off("messageSent")
+    }
+  }, [dispatch, userId])
+
+  useEffect(()=>{
+    socket.on("messageDelivered", ({msgId, deliveredBy})=>{
+      console.log("Message delivered:", msgId, "by", deliveredBy);
+      // update UI 
+      dispatch(markMessageDelivered({ msgId, userId:deliveredBy }))
+    })
+    return ()=>{
+      socket.off("messageDelivered")
+    }
+  }, [dispatch])
+
+  // read acknowledgement
+  useEffect(()=>{
+    socket.on("messageRead", ({convoId, readBy})=>{ 
+      console.log("Messages read in convo:", convoId, "by", readBy);
+      dispatch(markMessagesAsRead({convoId, userId:readBy}))
+    })
+    return ()=>{
+      socket.off("messageRead")
+    }
+  }, [dispatch])
 
   const formatChatTimestamp = (dateString) =>{
     const date = new Date(dateString);
@@ -274,8 +325,7 @@ const Message = () => {
     }, 1000); // stops typing after 1s of inactivity
   };
 
-
-// console.log("messageList", messageList)
+console.log("final",messageList[convoId])
 
 
   return (
@@ -283,9 +333,9 @@ const Message = () => {
       {/* Header */}
       <header className='h-16 w-full px-4 py-3 flex justify-between items-center bg-gray-400 dark:bg-gray-600 border-b border-gray-200 dark:border-gray-700 rounded-t-lg'>
         <div className='flex items-center gap-3 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors'>
-          <img src={activeChat?.profilePic || dummyDp} alt='Profile' className='w-10 h-10 object-cover rounded-full border-2 border-gray-200 dark:border-gray-800' />
+          <img src={activeChat?.profilePic || dummyDp} alt='Profile' className='w-10 h-10 object-cover rounded-lg border-2 border-gray-200 dark:border-gray-800' />
           <div className='flex flex-col'>
-            <p className='font-semibold text-gray-900 dark:text-white text-sm capitalize'>{activeChat?.name}</p>
+            <p className='font-semibold text-gray-900 dark:text-white text-lg capitalize'>{activeChat?.name}</p>
             <span className='text-xs text-green-600 dark:text-green-400 flex items-center gap-1'>
               <div className='w-2 h-2 bg-green-500 rounded-full'></div>
               {/* Online  */}
@@ -345,15 +395,19 @@ const Message = () => {
               {/* Messages */}
               {msgs.map((data, index) => (
                 <div key={index} className={`group mb-2 px-2 ${data.sender===userId ? "place-items-end" : "place-items-start" }`}>
-                  <div className={` relative flex w-fit max-w-[80%] h-fit text-lg font-medium border py-1 px-2 rounded-md ${data.sender===userId ? "rounded-br-none" : "rounded-bl-none"} bg-green-400 dark:bg-green-700 `}>
+                  <div className={` relative flex w-fit max-w-[80%] h-fit text-lg font-medium border py-1 px-2 rounded-md ${data.sender===userId ? "rounded-br-none bg-green-400 dark:bg-green-700" : "rounded-bl-none bg-slate-300 dark:bg-black/25"}  `}>
                     <p className={`${data.isRemoved ? 'italic text-red-800 dark:text-red-600 opacity-75':''}`}>{data.text} </p>
                     <span className="text-xs opacity-85 min-w-16 max-h-6 flex justify-center items-center mt-auto place-items-end-safe">{formatChatTimestamp(data.createdAt)}</span> 
+                    {data.sender === userId && !data.isRemoved && 
+                      <span className='text-sm opacity-85 mt-auto place-items-end-safe'> <MsgIndicator message={data} totalReceivers={data.totalReceivers}/> </span> 
+                    }
+                    {/* {data.sender === userId && <span className='text-sm opacity-85 mt-auto place-items-end-safe'> <LuCheckCheck style={{color:"blue"}}/> </span> } */}
                     {/* <i className={`absolute top-1/3 h-8 w-8 text-2xl bg-red-500 hover:bg-red-600 hover:cursor-pointer rounded-full flex justify-center items-center ${data.sender===userId ? 'block':'hidden'}`}><MdDelete /></i> */}
                     {data.sender === userId && (
                       <i onClick={()=>!data.isTemp && setDeleteMsgId(data._id)} 
-                          className={`absolute top-1/2 -left-10 transform -translate-y-1/2 hidden 
-                          ${data.isTemp ? 'cursor-not-allowed' : 'cursor-pointer'} 
-                          ${data.isRemoved ? 'hidden':'group-hover:flex'} h-8 w-8 text-2xl bg-red-500 hover:bg-red-600 rounded-full justify-center items-center`}> 
+                        className={`absolute top-1/2 -left-10 transform -translate-y-1/2 hidden 
+                        ${data.isTemp ? 'cursor-not-allowed' : 'cursor-pointer'} 
+                        ${data.isRemoved ? 'hidden':'group-hover:flex'} h-8 w-8 text-2xl bg-red-500 hover:bg-red-600 rounded-full justify-center items-center`}> 
                         {isDeleting && deleteMsgId===data._id ? (
                           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                         ) : (
@@ -362,8 +416,11 @@ const Message = () => {
                       </i>
                       )
                     }
+                    
+                    {/* // Add a reply back button
+                    // <i><TiArrowBack/></i> */}
                   </div>
-                  {/* <span className="text-xs opacity-85 mr-1 flex place-items-end">{formatChatTimestamp(data.createdAt)}</span> */}
+                  
                 </div>
               ))}
             </div>

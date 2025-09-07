@@ -214,7 +214,7 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
                     <img 
                       src={searchResult.profilePic} 
                       alt={searchResult.firstName}
-                      className="w-12 h-12 rounded-full object-cover"
+                      className="w-12 h-12 rounded-lg object-cover"
                     />
                   ) : (
                     <BiUser className="w-6 h-6 text-blue-600 dark:text-blue-400" />

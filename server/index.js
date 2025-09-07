@@ -11,6 +11,9 @@ const {Server} = require('socket.io')
 // const cookieParser = require('cookie-parser')
 const router = require('./routes/routes')
 
+const messageModel = require('./model/messageModel')
+const conversationModel = require('./model/conversationModel')
+
 const app = express()
 const PORT = process.env.PORT || 8080
 
@@ -48,50 +51,138 @@ function setUserStatus(userId, status, lastSeen=null){
     console.log(("user status updated: ", userId, userStatus[userId]))
 }
 
+// // socket events
+// io.on("connection", (socket)=>{
+//     console.log("user connected", socket.id)
+//     const userId = socket.handshake.query.userId;
+//     // Mark user online
+//     setUserStatus(userId, "online");
+//     // Notify others
+//     io.emit("userStatus", { userId, status: "online" });
+
+//     // when client sends message
+//     socket.on("sendMessage", (data)=>{
+//         console.log("message received", data)
+//         // send to all clients
+//         io.emit("receiveMessage", data)
+//         // io.emit("updatedConvoList", {
+//         //     convoId: data.convoId,
+//         //     lastMessage: data.text,
+//         //     createdAt: data.createdAt,
+//         // });
+//     })
+//     // // update conversation list 
+//     socket.on("newConvo", (data)=>{
+//         io.emit("updatedConvoList", {
+//             convoId: data.convoId,
+//             lastMessage: data.text,
+//             createdAt: data.createdAt,
+//         });
+//     })
+//     socket.on("typing", ({convoId, userId})=>{
+//         socket.to(convoId).emit("typing", {userId});
+//     })
+//     socket.on("stopTyping", ({convoId, userId})=>{
+//         socket.to(convoId).emit("stopTyping", {userId})
+//     })
+//     socket.on("joinRoom", (convoId)=>{
+//         socket.join(convoId);
+//         console.log(`user ${socket.id} joined convo ${convoId}`)
+//     })
+//     socket.on("disconnect", ()=>{
+//         setUserStatus(userId, "offline", Date.now());
+//         io.emit("userStatus", {userId, status:"offline", lastSeen:Date.now() })
+//         console.log("user disconnected", socket.id)
+//     })
+// })
+
 // socket events
-io.on("connection", (socket)=>{
-    console.log("user connected", socket.id)
+io.on("connection", (socket) => {
+    console.log("Socket connected", socket.id);
     const userId = socket.handshake.query.userId;
+
+    // --- JOIN ROOM ---
+    socket.on("join", (userId) => {
+        socket.join(userId.toString());
+        console.log(`user ${userId} joined room`);
+    });
+
     // Mark user online
     setUserStatus(userId, "online");
+
     // Notify others
     io.emit("userStatus", { userId, status: "online" });
 
-    // when client sends message
-    socket.on("sendMessage", (data)=>{
-        console.log("message received", data)
-        // send to all clients
-        io.emit("receiveMessage", data)
-        // io.emit("updatedConvoList", {
-        //     convoId: data.convoId,
-        //     lastMessage: data.text,
-        //     createdAt: data.createdAt,
-        // });
-    })
-    // // update conversation list 
-    socket.on("newConvo", (data)=>{
+    // --- SEND MESSAGE ---
+    // already handled in storeMessage.js
+    
+
+    // --- DELIVERED ---
+    socket.on("messageDelivered", async ({ msgId, userId }) => {
+        try{
+            const updated = await messageModel.findByIdAndUpdate(
+                msgId,
+                { $addToSet: { deliveredTo: userId } },
+                { new: true }
+            );
+
+            if (updated) {
+                // Notify sender that this user got it
+                io.to(updated.sender.toString()).emit("messageDelivered", { msgId, deliveredBy:userId });
+            }
+        }
+        catch(err){
+            console.error("Error updating delivery: ", err)
+        }
+    });
+
+    // --- READ ---
+    socket.on("messageRead", async ({ convoId, userId }) => {
+        try {
+            // Mark all messages in convo as read by this user
+            await messageModel.updateMany(
+                {
+                    conversationId: convoId,
+                    sender: { $ne: userId },
+                    readBy: { $ne: userId }
+                },
+                { $addToSet: { readBy: userId } }
+            );
+
+            // Notify sender(s)
+            io.emit("messageRead", { convoId, readBy: userId });
+        } catch (err) {
+            console.error("Error updating read: ", err);
+        }
+    });
+
+    // --- TYPING ---
+    socket.on("typing", ({ convoId, userId }) => {
+        socket.to(convoId).emit("typing", { userId });
+    });
+
+    socket.on("stopTyping", ({ convoId, userId }) => {
+        socket.to(convoId).emit("stopTyping", { userId });
+    });
+
+
+    // --- NEW CONVERSATION ---
+    socket.on("newConvo", (data) => {
         io.emit("updatedConvoList", {
             convoId: data.convoId,
             lastMessage: data.text,
             createdAt: data.createdAt,
         });
-    })
-    socket.on("typing", ({convoId, userId})=>{
-        socket.to(convoId).emit("typing", {userId});
-    })
-    socket.on("stopTyping", ({convoId, userId})=>{
-        socket.to(convoId).emit("stopTyping", {userId})
-    })
-    socket.on("joinRoom", (convoId)=>{
-        socket.join(convoId);
-        console.log(`user ${socket.id} joined convo ${convoId}`)
-    })
-    socket.on("disconnect", ()=>{
+    });
+
+    // --- DISCONNECT ---
+    socket.on("disconnect", () => {
         setUserStatus(userId, "offline", Date.now());
-        io.emit("userStatus", {userId, status:"offline", lastSeen:Date.now() })
-        console.log("user disconnected", socket.id)
-    })
-})
+        io.emit("userStatus", { userId, status: "offline", lastSeen: Date.now() });
+        console.log("user disconnected", socket.id);
+    });
+});
+
 
 //DB Connection
 // mongoose.connect(process.env.MONGODB_URI, 
@@ -104,7 +195,10 @@ io.on("connection", (socket)=>{
 // )
 // .then(()=> console.log("MongoDB Connected"))
 // .catch(err => console.error("MongoDB connection error: ", err))
-
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 app.use("/api", router)
 
 //start server

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FcGoogle } from "react-icons/fc";
 import SummaryApi from "../helpers/SummaryApi";
+import socket from "../helpers/socket";
 
 const GoogleLogin = () => {
     const navigate = useNavigate();
@@ -101,6 +102,7 @@ const GoogleLogin = () => {
             console.log("Google auth response:", data);
 
             if (data.token && data.user) {
+                socket.emit("join", data.user.userId) // join user room for socket
                 // Store JWT token and user data in localStorage
                 localStorage.setItem("authToken", data.token);
                 localStorage.setItem("userData", JSON.stringify(data.user));
