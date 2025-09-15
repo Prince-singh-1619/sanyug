@@ -11,18 +11,20 @@ import SummaryApi from '../helpers/SummaryApi';
 // import TextOutline from '../helpers/TextOutline';
 import { HiRefresh } from "react-icons/hi";
 import { AiOutlineSelect } from 'react-icons/ai';
-import socket from '../helpers/socket'
+import { connectSocket } from '../socket/socket';
 import dayjs from "dayjs";
 import calendar from "dayjs/plugin/calendar";
 import ChatDropdown from '../components/ChatDropdown';
 // import { useLocation } from 'react-router-dom';
 dayjs.extend(calendar);
 import { useDispatch, useSelector } from "react-redux";
-import { addMessage, setMessages, deleteMessage, updateTempMsgId, markMessagesAsRead, markMessageDelivered } from "../redux/slices/chatSlice";
+// import { addMessage, setMessages, deleteMessage, updateTempMsgId, markMessageAsRead, markMessageDelivered } from "../redux/slices/chatSlice";
+import { addMessage, setMessages, updateTempMsgId } from "../redux/slices/chatSlice";
 import DeleteConfirm from '../popups/DeleteConfirm';
 import MsgIndicator from '../components/MsgIndicator';
 
 import { toast } from 'react-hot-toast';
+import { setLastMessage, updateLastTempMsgId } from '../redux/slices/convoSlice';
 
 
 const Message = () => {
@@ -30,29 +32,33 @@ const Message = () => {
   
   const [message, setMessage] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
-  // const [messageList, setMessageList] = useState([])
-  // const list = messageList
   const [chatDropdown, setChatDropdown] = useState(false)
-  const [typingUser, setTypingUser] = useState(null)
   // const [deleteBox, setDeleteBox] = useState(false)
   const [deleteMsgId, setDeleteMsgId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // const location = useLocation();
-  // const activeChat = location.state?.activeChat;
-
   const dispatch = useDispatch()
-  const {activeChat, activeConvoId, messageList} = useSelector((state)=>state.chat)
+  const {activeChat, messageList, activeConvoId_otherSide} = useSelector((state)=>state.chat)
+  const { activeConvoId, convoList, convoUserTyping } = useSelector(state => state.convo);
+  const userLastSeen = convoList.find(c=>c.convoId===activeConvoId).lastSeen
+  // console.log("convoList[activeConvoId].lastSeen", convoList[activeConvoId].lastSeen)
 
   const convoId = activeConvoId
-  // const convoId = activeChat?.convoId
+
   const authToken = localStorage.getItem("authToken");
   const userData = JSON.parse(localStorage.getItem("userData"))
   const userId = userData?.userId
+  // console.log("userId in Message", userId)
+
+  // console.log("convoUserTyping", convoUserTyping[convoId]);
+  const typingUser = convoUserTyping[activeConvoId] || [] 
+  const isTyping = typingUser.some(id => id !== userId);
+
+  let readMessages = [];
+  let unreadMessages = [];
+  // console.log("isTyping", isTyping)
   
-  // const me = true
-  // const me = false
-  // const me = list?.sender===userId ? true : false
+  const socket = connectSocket();
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -69,26 +75,44 @@ const Message = () => {
   };
 
   const handleSendMessage = async() => {
+    if (!message.trim() && !selectedFile) return;
     // const newMessage = { sender:userId, text:message, createdAt:Date.now() };
     // console.log("newMessage: ", newMessage)
     
     const tempId = Date.now().toString();
     dispatch(addMessage({
-      convoId,
+      // convoId,
       message: {
+        conversationId: convoId,
         _id: tempId,              // temporary id
         text: message,         // the message text
         sender: userId,           // current user
         isTemp: true,   
-        deliveredTo: 0,
-        readBy: 0,          // mark as not confirmed yet
+        // give a totalReceiver here, to properly show msg status
+        deliveredTo: [],
+        readBy: [],          // mark as not confirmed yet
         createdAt: new Date().toISOString()
       }
     }));
 
+    // update convoList 
+    dispatch(setLastMessage({
+      // convoId, 
+      msg:{
+        conversationId: convoId,
+        _id: tempId,
+        text:message, 
+        sender:userId, 
+        deliveredTo: [],
+        readBy: [],
+        createdAt:new Date().toISOString()
+      }
+    }))
+    
+
     // add redux to update convoList with last message and icon
 
-    if (message.trim() || selectedFile) {
+    
       console.log('Sending message:', message);
       console.log('Selected file:', selectedFile);
 
@@ -96,8 +120,11 @@ const Message = () => {
         convoId,
         sender: userId,
         text: message,
-        media: selectedFile || null,
-        isRead: false,
+        media: selectedFile ? { type: "image", url: selectedFile } : null,
+        // totalReceivers: activeChat?.isGroup ? (activeChat?.members?.length -1) : 1,
+        // deliveredTo: [],
+        // readBy: [],
+        // isRead: false,
         // createdAt: new Date().toISOString()
       }
 
@@ -105,8 +132,7 @@ const Message = () => {
       setSelectedFile(null);
 
       // using react hot toast here
-      const res = await toast.promise( 
-        fetch(SummaryApi.sendMessage.url, {
+      const res = await toast.promise( fetch(SummaryApi.sendMessage.url, {
         method: SummaryApi.sendMessage.method,
         headers:{
           'Content-type' : 'application/json',
@@ -120,18 +146,24 @@ const Message = () => {
           error: "Failed to send message"
         }
       );
+      // turn response into error if not ok
+      if (!res.ok) {
+        throw new Error(`Request failed with status ${res.status}`);
+      }
 
       const resData = await res.json();
       if(resData.success){
         // toast.success(resData.message)
         // Emit live events to other clients
         dispatch(updateTempMsgId({ convoId, tempId, newId:resData.data._id }));
-        // socket.emit("sendMessage", payload)
+        dispatch(updateLastTempMsgId({ convoId, tempId, newId:resData.data._id }))
+        // socket.emit("sender-message-sent", payload)
+        // console.log("Updating temp msg:", { convoId, tempId, newId: resData.data._id });
       }
       else{
         // toast.warning(resData.message)
       }
-    }
+    
   };
 
   const handleGetMessages = async() =>{
@@ -148,7 +180,10 @@ const Message = () => {
 
       const resData = await res.json()
       if(resData.success){
-        console.log("MessageList from getMessages", resData.data)
+        readMessages = resData.data.filter(m => m.readBy.includes(userId));
+        unreadMessages = resData.data.filter(m => !m.readBy.includes(userId) && m.sender.toString() === userId);
+        console.log("readMessages", readMessages, "unreadMessages", unreadMessages)
+        // console.log("MessageList from getMessages", resData.data)
         // setMessageList(resData.data)
         dispatch(setMessages({convoId, messages:resData.data})) //store in redux
         toast.success(resData.message)
@@ -168,53 +203,45 @@ const Message = () => {
     if(activeChat && convoId){
     // if(convoId && !messageList){
       handleGetMessages()
-      socket.emit("messageRead", {convoId, userId}) // mark all as read
+      // socket.emit("messageRead", {convoId, userId}) // mark all as read
     }
   }, [convoId])
 
-  // socket for live receiving
-  useEffect(() => {
-    socket.on("receiveMessage", (msg) => {
-      console.log("new msg received", msg)
-      dispatch(addMessage({ convoId: msg.conversationId, message: msg }));
-      // acknowledge delivery back to server
-      socket.emit("messageDelivered", { msgId: msg._id, userId })
-    })
-    return()=>{
-      socket.off("receiveMessage");
-    }
-  }, [dispatch, userId]);
+  // // transferred to another file
+  // // for receiver
+  // useEffect(()=>{
+  //   socket.on("new-message-received", (msg)=>{
+  //     console.log("msg received", msg)
+  //     console.log("convoId being used:", msg.conversationId, typeof msg.conversationId);
 
-  useEffect(()=>{
-    socket.on("messageSent", (id)=>{
-      console.log("msg confirmed", id)
-    })
-    return()=>{
-      socket.off("messageSent")
-    }
-  }, [dispatch, userId])
+  //     dispatch(addMessage({ message: msg }));
+  //     // receiver to sender
+  //     socket.emit("message-delivered", { msgId:msg._id, sender:msg.sender, receiver:userId })
+  //   })
+  //   return()=>{
+  //     socket.off("new-message-received")
+  //   }
+  // }, [dispatch, userId])
 
-  useEffect(()=>{
-    socket.on("messageDelivered", ({msgId, deliveredBy})=>{
-      console.log("Message delivered:", msgId, "by", deliveredBy);
-      // update UI 
-      dispatch(markMessageDelivered({ msgId, userId:deliveredBy }))
-    })
-    return ()=>{
-      socket.off("messageDelivered")
-    }
-  }, [dispatch])
+  // // for sender - confirmation
+  // useEffect(()=>{
+  //   socket.on("message-delivery-confirmed", ({msgId, receiver})=>{
+  //     console.log("msg sent confirmed by server. msgId:", msgId, "receiver:", receiver)
+  //     console.log("my Id:", userId)
+  //     // tempId taken care in http success itself
+  //     dispatch(markMessageDelivered({ msgId, receiver }));
+  //   })
+  //   return()=>{
+  //     socket.off("message-delivery-confirmed")
+  //   }
+  // }, [dispatch, userId])
 
-  // read acknowledgement
-  useEffect(()=>{
-    socket.on("messageRead", ({convoId, readBy})=>{ 
-      console.log("Messages read in convo:", convoId, "by", readBy);
-      dispatch(markMessagesAsRead({convoId, userId:readBy}))
-    })
-    return ()=>{
-      socket.off("messageRead")
-    }
-  }, [dispatch])
+// for debugging only, remove later
+// const messages = useSelector(state => state.chat.messageList[convoId]);
+// useEffect(() => {
+//   console.log("Messages updated:", messages);
+// }, [messages]);
+
 
   const formatChatTimestamp = (dateString) =>{
     const date = new Date(dateString);
@@ -292,69 +319,86 @@ const Message = () => {
   //   return () => socket.off("messageDeleted");
   // }, []);
 
-  useEffect(()=>{
-    socket.on("userstatus", ({userId, status, lastSeen})=>{
-      // update UI 
-    })
-  })
+  // useEffect(()=>{
+  //   socket.on("userstatus", ({userId, status, lastSeen})=>{
+  //     // update UI 
+  //   })
+  // })
 
-  useEffect(() => {
-    socket.on("typing", ({ userId }) => {
-      setTypingUser(userId);
-    });
+  // user typing indicator
+  // useEffect(() => {
+  //   socket.on("typing", ({ userId }) => {
+  //     setTypingUser(userId);
+  //   });
 
-    socket.on("stopTyping", ({ userId }) => {
-      if (typingUser === userId) setTypingUser(null);
-    });
+  //   socket.on("stopTyping", ({ userId }) => {
+  //     if (typingUser === userId) setTypingUser(null);
+  //   });
 
-    return () => {
-      socket.off("typing");
-      socket.off("stopTyping");
-    };
-  }, [typingUser]);
+  //   return () => {
+  //     socket.off("typing");
+  //     socket.off("stopTyping");
+  //   };
+  // }, [typingUser]);
+console.log("")
+
 
   // When user types in input box
+  const typingTimeoutRef = useRef(null);
   const handleTyping = (e) => {
     setMessage(e.target.value);
 
-    socket.emit("typing", { convoId, userId });
+    const convo = convoList.find(c=>c.convoId===activeConvoId)
+    if(!convo) return;
+    // console.log("convo for typing event", convo)
+    const receivers = convo.participants.map(p=>p._id).filter(id=>id!==userId)
+    console.log("receivers for typing event", receivers)
 
-    clearTimeout(window.typingTimeout);
-    window.typingTimeout = setTimeout(() => {
-      socket.emit("stopTyping", { convoId, userId });
-    }, 1000); // stops typing after 1s of inactivity
+    if(!typingTimeoutRef.current){
+      socket.emit("typing", {sender:userId, convoId:activeConvoId, receivers})
+      console.log("typing emitted...........")
+    }
+
+    // clear old timer
+    clearTimeout(typingTimeoutRef.current);
+    // set new timer
+    typingTimeoutRef.current = setTimeout(()=>{
+      socket.emit("stoppedTyping", {sender:userId, convoId:activeConvoId, receivers})
+      console.log("stoppedTyping")
+      typingTimeoutRef.current = null;
+    }, 1500)
   };
 
-console.log("final",messageList[convoId])
+// console.log("final",messageList[convoId])
 
 
   return (
     <section className='w-full h-[99vh] max-h-screen flex flex-col  rounded-lg border border-slate-400 shadow-sm'>
       {/* Header */}
-      <header className='h-16 w-full px-4 py-3 flex justify-between items-center bg-gray-400 dark:bg-gray-600 border-b border-gray-200 dark:border-gray-700 rounded-t-lg'>
-        <div className='flex items-center gap-3 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors'>
+      <header className='h-16 w-full px-4 py-3 flex justify-between items-center bg-gray-300 dark:bg-gray-600 border-b border-gray-200 dark:border-gray-700 rounded-t-lg'>
+        <button className='flex items-center gap-3 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors'>
           <img src={activeChat?.profilePic || dummyDp} alt='Profile' className='w-10 h-10 object-cover rounded-lg border-2 border-gray-200 dark:border-gray-800' />
-          <div className='flex flex-col'>
+          <div className='flex flex-col items-start'>
             <p className='font-semibold text-gray-900 dark:text-white text-lg capitalize'>{activeChat?.name}</p>
-            <span className='text-xs text-green-600 dark:text-green-400 flex items-center gap-1'>
-              <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-              {/* Online  */}
-              {/* {user.status==='online' ? "Online" : `Last seen at ${new Date(user.lastSeen).toLocaleTimeString}`} */}
-              {activeChat?.status=='online' ? "Online" : ` Last seen at ${new Date(activeChat?.lastSeen).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`}
-              {typingUser && typingUser!==userId && (
-                <p className='text-sm text-gray-500'>Typing...</p>
+            {/* Online  */}
+            <span className={`text-xs ${activeConvoId===activeConvoId_otherSide ? 'text-green-600 dark:text-green-400' : 'opacity-85'}  flex items-center gap-1`}>
+              {activeConvoId===activeConvoId_otherSide ? <div className='w-2 h-2 bg-green-500 rounded-full'></div> : ''}
+              {isTyping ? (
+                "Typing..."
+                ) : (
+                  activeConvoId===activeConvoId_otherSide ? "Online" : ` Last seen at ${userLastSeen}`
               )}
             </span>
           </div>
-        </div>
+        </button>
         <div className='flex items-center gap-2'>
-          <button onClick={handleGetMessages} className='p-2 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors'>
+          <button onClick={handleGetMessages} className='p-3 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors'>
             <HiRefresh className='text-lg' />
           </button>
-          <button className='p-2 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors'>
+          <button className='p-3 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors'>
             <LuTextSearch className='text-lg' />
           </button>
-          <button onClick={()=>setChatDropdown((prev)=>!prev)} className='p-2 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors'>
+          <button onClick={()=>setChatDropdown((prev)=>!prev)} className='p-3 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors'>
             <SlOptionsVertical className='text-lg' />
           </button>
           <div className='absolute z-50'>{chatDropdown && (<ChatDropdown/>)}</div>
@@ -391,23 +435,27 @@ console.log("final",messageList[convoId])
                   })}
                 </span>
               </div>
-
+                  
               {/* Messages */}
-              {msgs.map((data, index) => (
-                <div key={index} className={`group mb-2 px-2 ${data.sender===userId ? "place-items-end" : "place-items-start" }`}>
+              {msgs.map((data, index) =>{ 
+                const isFirstUnread = !data.readBy.includes(userId) && data.sender!==userId && (index==0 || msgs[index-1].readBy.includes(userId))
+                // return (<div key={msg._id}>{isFirstUnread && <span>{UnreadMessages.length} new Messages</span>}</div>)
+                return(
+                <div key={data._id || index} className={`group mb-2 px-2 ${data.sender===userId ? "place-items-end" : "place-items-start" }`}>
+                  {/* Unread divider */}
+                  {isFirstUnread && (<div className="w-1/2 flex justify-center items-center mx-auto text-nowrap my-2 bg-gray-800"> <span className="px-4 py-1 rounded-full  text-white text-sm">{unreadMessages.length} Unread Messages</span> </div>)}                  
+
                   <div className={` relative flex w-fit max-w-[80%] h-fit text-lg font-medium border py-1 px-2 rounded-md ${data.sender===userId ? "rounded-br-none bg-green-400 dark:bg-green-700" : "rounded-bl-none bg-slate-300 dark:bg-black/25"}  `}>
                     <p className={`${data.isRemoved ? 'italic text-red-800 dark:text-red-600 opacity-75':''}`}>{data.text} </p>
                     <span className="text-xs opacity-85 min-w-16 max-h-6 flex justify-center items-center mt-auto place-items-end-safe">{formatChatTimestamp(data.createdAt)}</span> 
                     {data.sender === userId && !data.isRemoved && 
-                      <span className='text-sm opacity-85 mt-auto place-items-end-safe'> <MsgIndicator message={data} totalReceivers={data.totalReceivers}/> </span> 
+                      <span className='text-sm opacity-85 mt-auto place-items-end-safe'> <MsgIndicator message={data} /> </span> 
                     }
-                    {/* {data.sender === userId && <span className='text-sm opacity-85 mt-auto place-items-end-safe'> <LuCheckCheck style={{color:"blue"}}/> </span> } */}
-                    {/* <i className={`absolute top-1/3 h-8 w-8 text-2xl bg-red-500 hover:bg-red-600 hover:cursor-pointer rounded-full flex justify-center items-center ${data.sender===userId ? 'block':'hidden'}`}><MdDelete /></i> */}
                     {data.sender === userId && (
                       <i onClick={()=>!data.isTemp && setDeleteMsgId(data._id)} 
                         className={`absolute top-1/2 -left-10 transform -translate-y-1/2 hidden 
                         ${data.isTemp ? 'cursor-not-allowed' : 'cursor-pointer'} 
-                        ${data.isRemoved ? 'hidden':'group-hover:flex'} h-8 w-8 text-2xl bg-red-500 hover:bg-red-600 rounded-full justify-center items-center`}> 
+                        ${data.isRemoved ? 'hidden':'group-hover:flex'} h-8 w-8 text-2xl bg-red-500 hover:bg-red-600 text-slate-100 rounded-full justify-center items-center`}> 
                         {isDeleting && deleteMsgId===data._id ? (
                           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                         ) : (
@@ -422,7 +470,7 @@ console.log("final",messageList[convoId])
                   </div>
                   
                 </div>
-              ))}
+              )})}
             </div>
           ))}
           <div ref={bottomRef}/>
@@ -433,7 +481,7 @@ console.log("final",messageList[convoId])
       </div>
 
       {/* Footer - Message Input */}
-      <footer className='h-20 w-full p-4 bg-gray-400 dark:bg-gray-600 border-t border-gray-200 dark:border-gray-700 rounded-b-lg'>
+      <footer className='h-20 w-full p-4 bg-gray-300 dark:bg-gray-600 border-t border-gray-200 dark:border-gray-700 rounded-b-lg'>
         <div className='flex items-center gap-3'>
           {/* File Upload */}
           <div className='flex items-center gap-2'>
@@ -487,7 +535,7 @@ console.log("final",messageList[convoId])
           <button
             onClick={handleSendMessage}
             disabled={!message.trim() && !selectedFile}
-            className='p-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white rounded-lg transition-colors disabled:cursor-not-allowed flex items-center justify-center'
+            className='p-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 dark:disabled:bg-gray-700 text-white rounded-lg transition-colors disabled:cursor-not-allowed flex items-center justify-center'
             title="Send message"
           >
             <IoSend className='text-lg' />

@@ -10,7 +10,7 @@ const DeleteConfirm = ({msgId, open, setOpen}) => {
     // const [open, setOpen] = useState(false);
     const dispatch = useDispatch()
     // const [deleteBox, setDeleteBox] = useState(false);
-    const {activeConvoId} = useSelector((state)=>state.chat)
+    const {activeConvoId} = useSelector((state)=>state.convo)
 
     const authToken = localStorage.getItem("authToken");
 

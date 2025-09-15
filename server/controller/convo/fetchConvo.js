@@ -4,22 +4,37 @@ const messageModel = require("../../model/messageModel")
 async function fetchConvoController(req, res){
     try {
         const {userId} = req.query
+        // console.log("fetchConvoController called with userId:", userId);
         if(!userId) throw new Error('userId is required')
 
-        const convos = await conversationModel
+        const convoData = await conversationModel
             .find({participants: userId})
             .populate({
                 path: 'participants',
-                select: '_id firstName lastName profilePic'
-            })
-            // remove this and add directly fetch from messageModel for last message
-            .populate({
-                path: 'lastMessage',
-                select: 'text createdAt'
+                select: '_id firstName lastName profilePic lastSeen'
             })
             .sort({updatedAt: -1}) // Most recent first
+        .lean(); // convert to plain JS object
+
+        const fullConvoData = await Promise.all(
+            convoData.map(async convo =>{
+                const msg = await messageModel
+                    .findOne({conversationId: convo._id})
+                    .sort({createdAt: -1})
+                    .select("text sender createdAt deliveredTo readBy")
+                .lean();
+                const unreadCount = await messageModel.countDocuments({
+                    conversationId: convo._id,
+                    sender: {$ne: userId},
+                    readBy: {$ne: userId}
+                })
+                return { ...convo, lastMessage: msg || null, unreadCount }; // combining conversation data with last message
+            }),
+        )
+
+        // fullConvoData = {...fullConvoData, unreadCount}
         
-        const convoIds = convos.map(c=>c._id) // reusable for updateMany
+        const convoIds = convoData.map(c=>c._id) // reusable for updateMany
 
         if(convoIds.length > 0){
             await messageModel.updateMany(
@@ -40,7 +55,7 @@ async function fetchConvoController(req, res){
 
         res.status(200).json({
             message: "Conversations fetched successfully",
-            data: convos,
+            data: fullConvoData,
             error: false,
             success: true
         })

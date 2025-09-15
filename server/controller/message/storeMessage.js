@@ -7,50 +7,49 @@ async function storeMessageController(req, res){
 
         if(!convoId) throw new Error("ConversationId is required")
         if(!sender) throw new Error("userId is required")
-        if(!text) throw new Error("please enter a message")
+        if(!text && !media) throw new Error("please enter a message")
 
         const conversation = await conversationModel.findById(convoId).select("participants");
         if (!conversation) throw new Error("Conversation not found");
+        
         // total receivers = all participants except sender
-        const totalReceivers = conversation.participants.filter(
-            (id) => id.toString() !== sender.toString()
-        ).length;
+        const totalReceivers = conversation.participants.length-1;
 
         const newMessage = new messageModel({
             conversationId: convoId,
             sender,
             text,
             media: media || null,
-            // isRead: isRead || false
-            totalReceivers,
+            totalReceivers, // send totalReceivers from frontend,
             deliveredTo: [],
             readBy: []
         })
         const store = await newMessage.save()
 
         // Update conversation's lastMessage
-        await conversationModel.findByIdAndUpdate(
-            convoId,
-            {
-                $set: {
-                    "lastMessage.msgId": store._id,
-                    "lastMessage.text": text,
-                    "lastMessage.sender": sender
-                }
-            },
-            { new: true }
-        );
+        // await conversationModel.findByIdAndUpdate(
+        //     convoId,
+        //     {
+        //         $set: {
+        //             "lastMessage.msgId": store._id,
+        //             "lastMessage.text": text,
+        //             "lastMessage.sender": sender
+        //         }
+        //     },
+        //     { new: true }
+        // );
 
 
         // const conversation = await conversationModel.findById(convoId).select("participants");
         // Emit via socket.io (attach io to req in app.js)
         conversation.participants.forEach(memberId => {
             if (memberId.toString() !== sender.toString()) {
-                req.io.to(memberId.toString()).emit("receiveMessage", store);
+                req.io.to(memberId.toString()).emit("new-message-received", store);
+                console.log("message saved successfully", store);
             }
         });
         // Confirm to sender as "sent"
-        req.io.to(sender.toString()).emit("messageSent", store._id);
+        // socket.emit("message-sent", store._id);
 
 
         return res.status(200).json({

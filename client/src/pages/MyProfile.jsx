@@ -1,11 +1,26 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { disconnectSocket, getSocket } from '../socket/socket'
+import { useDispatch } from "react-redux";
+import { clearChatState } from '../redux/slices/chatSlice'
+import { clearConvoState } from '../redux/slices/convoSlice';
 
 const MyProfile = () => {
     const navigate = useNavigate()
+    const dispatch = useDispatch()
+    const socket = getSocket()
+
+    const userData = JSON.parse(localStorage.getItem("userData"));
+    const userId = userData?.userId;
 
     const handleLogout = () =>{
+        if(socket){
+            socket.emit("user_logout", {userId});
+            disconnectSocket();
+            dispatch(clearChatState());
+            dispatch(clearConvoState());
+        }
         localStorage.removeItem("userData")
         localStorage.removeItem("authToken")
         toast.success("Logged out successfully")

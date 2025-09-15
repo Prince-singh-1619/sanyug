@@ -11,8 +11,6 @@ import { LuPanelRightClose } from "react-icons/lu";
 import { LuPanelLeftClose } from "react-icons/lu";
 import { AiOutlineClose } from "react-icons/ai";
 
-
-
 const Sidebar = () => {
     const [isPanelOpen, setIsPanelOpen] = useState(false);
     const [isPopupOpen, setIsPopupOpen] = useState(false)

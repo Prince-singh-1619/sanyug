@@ -39,7 +39,7 @@ async function googleAuthController(req, res) {
         }
 
         // Create JWT for your own session
-        const token = jwt.sign({ id: user._id }, process.env.TOKEN_SECRET_KEY, {
+        const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET_KEY, {
             expiresIn: '7d',
         });
 
@@ -51,7 +51,7 @@ async function googleAuthController(req, res) {
                 lastName: user.lastName,
                 username: user.username,
                 email: user.email,
-                userTag: user.userTag,
+                // userTag: user.userTag,
                 profilePic: user.profilePic,
             },
         });

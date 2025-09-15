@@ -1,10 +1,16 @@
 import { createSlice } from "@reduxjs/toolkit"
+import { setLastMessage } from "./convoSlice";
 
 const initialState = {
     activeChat: null,
-    activeConvoId: null,
+    // activeConvoId: null,
+    activeConvoId_otherSide: null,
     messageList: {},
 };
+
+// const userData = JSON.parse(localStorage.getItem("userData"))
+// const userId = userData?.userId
+
 
 const chatSlice = createSlice({
     name: "chat",
@@ -12,56 +18,80 @@ const chatSlice = createSlice({
     reducers: {
         setActiveChat: (state, action) =>{
             state.activeChat = action.payload.chat;
-            state.activeConvoId = action.payload.convoId;
         },
         addMessage: (state, action) =>{
-            const {convoId, message} = action.payload;
+            const { message } = action.payload;
+            const convoId = message.conversationId;
+            console.log("Reducer addMessage called with:", convoId, message);
+
             if(!state.messageList[convoId]){
                 state.messageList[convoId] = [];
             }
             state.messageList[convoId].push(message)
+
+            // update last message in convoSlice as well
+            // store.dispatch(setLastMessage({ convoId, msg: message }));
         },
         updateTempMsgId: (state, action) => {
             const { convoId, tempId, newId } = action.payload;
+            // console.log("updateTempMsgId called with:", { convoId, tempId, newId });
+            // console.log("Before update:", state.messageList[convoId]);
             state.messageList[convoId] = state.messageList[convoId].map(msg =>
-                msg._id === tempId ? { ...msg, _id:newId, isTemp:false } : msg
+                msg._id === tempId ? { ...msg, _id:newId, isTemp:false } : msg    
             );
+            // console.log("After update:", state.messageList[convoId]);
         },
+        markMessageDelivered: (state, action)=>{
+            // here activeConvoId is of receiver sent from server
+            const {msgId, receiver} = action.payload;
+            console.log("activeConvoId_otherSide", state.activeConvoId_otherSide)
 
+            for(const convoId in state.messageList){
+                if(!state.messageList[convoId]) continue;
+                // find the message by _id 
+                const msg = state.messageList[convoId].find(m=> m._id===msgId);
+                if(msg){
+                    if(!msg.deliveredTo) msg.deliveredTo = [];
+                    if (!msg.readBy) msg.readBy = [];
 
-        // Update a message when delivered
-        markMessageDelivered: (state, action) => {
-            const { msgId, userId } = action.payload;
-
-            for (const convoId in state.conversations) {
-                state.conversations[convoId] = state.conversations[convoId].map((msg) =>
-                msg._id === msgId
-                    ? {
-                        ...msg,
-                        deliveredTo: [...new Set([...(msg.deliveredTo || []), userId])]
+                    // add receiver only, if not present
+                    if(!msg.deliveredTo.includes(receiver)){
+                        msg.deliveredTo.push(receiver);
+                        console.log("pushed")
                     }
-                    : msg
-                );
+                    // also add to readBy if activeConvoId matches
+                    if(convoId===state.activeConvoId_otherSide){
+                        if(!msg.readBy){
+                            msg.readBy = [];
+                        }
+                        if(!msg.readBy.includes(receiver)){
+                            msg.readBy.push(receiver);
+                        }
+                    }
+                    
+                    break; // exit loop once message is found and updated
+                }
             }
         },
-        // Update messages when read
-        markMessagesAsRead: (state, action) => {
-            const { convoId, userId } = action.payload;
+        markMessageAsRead: (state, action)=>{
+            const { activeConvoId_otherSide, sender } = action.payload;
+            state.activeConvoId_otherSide = activeConvoId_otherSide;
+            console.log("activeConvoId_otherSide", state.activeConvoId_otherSide)
+            // make sure to update only if activeConvoId matches
+            // if(state.activeChat?.convoId !== activeConvoId_otherSide) return;
+            const messages = state.messageList[activeConvoId_otherSide];
+            console.log("messages in markMessageAsRead", messages)
+            if(!messages) return;
 
-            if (state.conversations[convoId]) {
-                state.conversations[convoId] = state.conversations[convoId].map((msg) =>
-                msg.sender !== userId
-                    ? {
-                        ...msg,
-                        readBy: [...new Set([...(msg.readBy || []), userId])]
-                    }
-                    : msg
-                );
+            for(const msg of messages){
+                if(!msg.readBy){
+                    msg.readBy = [];
+                }
+                if(!msg.readBy.includes(sender)){
+                    msg.readBy.push(sender);
+                }
             }
         },
-
-
-
         setMessages: (state, action) =>{
             const {convoId, messages} = action.payload;
             state.messageList[convoId] = messages;
@@ -76,6 +106,7 @@ const chatSlice = createSlice({
         },
         clearChatState: (state)=>{
             state.activeChat = null;
+            state.activeConvoId_otherSide = null;
             state.messageList = {};
         }
     },
@@ -83,10 +114,11 @@ const chatSlice = createSlice({
 
 export const { 
     setActiveChat, 
+    // chatUserTyping,
     addMessage, 
     updateTempMsgId, 
     markMessageDelivered,
-    markMessagesAsRead,
+    markMessageAsRead,
     setMessages, 
     deleteMessage, 
     clearChatState 

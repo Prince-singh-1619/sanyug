@@ -1,210 +1,201 @@
-const dotenv = require('dotenv')
-dotenv.config()     //load env variables
+const dotenv = require("dotenv");
+dotenv.config(); //load env variables
 
-const express = require('express')
-const cors = require('cors')
-const mongoose = require('mongoose')
-const connectDB = require('./config/db')
-const http = require("http")
-const {Server} = require('socket.io')
+const express = require("express");
+const cors = require("cors");
+const mongoose = require("mongoose");
+const connectDB = require("./config/db");
+const http = require("http");
+const { Server } = require("socket.io");
+const jwt = require("jsonwebtoken");
 
 // const cookieParser = require('cookie-parser')
-const router = require('./routes/routes')
+const router = require("./routes/routes");
 
-const messageModel = require('./model/messageModel')
-const conversationModel = require('./model/conversationModel')
+const messageModel = require("./model/messageModel");
+const conversationModel = require("./model/conversationModel");
+const userModel = require("./model/userModel");
 
-const app = express()
-const PORT = process.env.PORT || 8080
+const app = express();
+const PORT = process.env.PORT || 8080;
 
-connectDB()
+connectDB();
 
 //middleware
-app.use(cors(
-    {
-        origin: process.env.FRONTEND_URL,
-        // origin: allowedOrigins,
-        credentials: true,
-        methods: ["POST", "GET", "PUT", "DELETE"],
-    }
-))
-app.use(express.json({ limit:'2mb' }))
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    // origin: allowedOrigins,
+    credentials: true,
+    methods: ["POST", "GET", "PUT", "DELETE"],
+  })
+);
+app.use(express.json({ limit: "2mb" }));
 // app.use(cookieParser())
 
-const server = http.createServer(app)
+const server = http.createServer(app);
 // Creating socket.io server
 const io = new Server(server, {
-    cors:{
-        origin: process.env.FRONTEND_URL,
-        // origin: allowedOrigins,
-        credentials: true,
-        methods: ["POST", "GET", "PUT", "DELETE"],
-    }
-})
+  cors: {
+    origin: process.env.FRONTEND_URL,
+    // origin: allowedOrigins,
+    credentials: true,
+    methods: ["POST", "GET", "PUT", "DELETE"],
+  },
+});
 
 // for controllers
 app.set("io", io);
 
-const userStatus = {};
-function setUserStatus(userId, status, lastSeen=null){
-    userStatus[userId] = {status, lastSeen};
-    console.log(("user status updated: ", userId, userStatus[userId]))
+// const onlineUsers = new Map(); // userId -> socketId
+// const userStatus = {};
+// function setUserStatus(userId, status, lastSeen = null) {
+//   userStatus[userId] = { status, lastSeen };
+//   console.log(("user status updated: ", userId, userStatus[userId]));
+// }
+
+async function updateUserLastSeen(userId) {
+  try {
+    await userModel.findByIdAndUpdate(
+      userId,
+      { lastSeen: new Date() },
+      { new: true } // returns updated doc if you ever need it
+    );
+    // console.log(`✅ Last seen updated for user ${userId}`);
+  } catch (error) {
+    // console.error(`❌ Failed to update last seen for ${userId}:`, error.message);
+  }
 }
 
-// // socket events
-// io.on("connection", (socket)=>{
-//     console.log("user connected", socket.id)
-//     const userId = socket.handshake.query.userId;
-//     // Mark user online
-//     setUserStatus(userId, "online");
-//     // Notify others
-//     io.emit("userStatus", { userId, status: "online" });
-
-//     // when client sends message
-//     socket.on("sendMessage", (data)=>{
-//         console.log("message received", data)
-//         // send to all clients
-//         io.emit("receiveMessage", data)
-//         // io.emit("updatedConvoList", {
-//         //     convoId: data.convoId,
-//         //     lastMessage: data.text,
-//         //     createdAt: data.createdAt,
-//         // });
-//     })
-//     // // update conversation list 
-//     socket.on("newConvo", (data)=>{
-//         io.emit("updatedConvoList", {
-//             convoId: data.convoId,
-//             lastMessage: data.text,
-//             createdAt: data.createdAt,
-//         });
-//     })
-//     socket.on("typing", ({convoId, userId})=>{
-//         socket.to(convoId).emit("typing", {userId});
-//     })
-//     socket.on("stopTyping", ({convoId, userId})=>{
-//         socket.to(convoId).emit("stopTyping", {userId})
-//     })
-//     socket.on("joinRoom", (convoId)=>{
-//         socket.join(convoId);
-//         console.log(`user ${socket.id} joined convo ${convoId}`)
-//     })
-//     socket.on("disconnect", ()=>{
-//         setUserStatus(userId, "offline", Date.now());
-//         io.emit("userStatus", {userId, status:"offline", lastSeen:Date.now() })
-//         console.log("user disconnected", socket.id)
-//     })
-// })
-
-// socket events
 io.on("connection", (socket) => {
-    console.log("Socket connected", socket.id);
-    const userId = socket.handshake.query.userId;
+  // console.log("New socket connection:", socket.id);
 
-    // --- JOIN ROOM ---
-    socket.on("join", (userId) => {
-        socket.join(userId.toString());
-        console.log(`user ${userId} joined room`);
-    });
+  const token = socket.handshake.auth?.token;
+  if (!token) {
+    // console.log("No token provided");
+    socket.disconnect();
+    return;
+  }
 
-    // Mark user online
-    setUserStatus(userId, "online");
+  try {
+    // verify token
+    const decoded = jwt.verify(token, process.env.TOKEN_SECRET_KEY);
+    // console.log("Decoded JWT payload:", decoded);
+    const userId = decoded.userId; // assuming your JWT payload has { id: user._id }
 
-    // Notify others
-    io.emit("userStatus", { userId, status: "online" });
-
-    // --- SEND MESSAGE ---
-    // already handled in storeMessage.js
-    
-
-    // --- DELIVERED ---
-    socket.on("messageDelivered", async ({ msgId, userId }) => {
-        try{
-            const updated = await messageModel.findByIdAndUpdate(
-                msgId,
-                { $addToSet: { deliveredTo: userId } },
-                { new: true }
-            );
-
-            if (updated) {
-                // Notify sender that this user got it
-                io.to(updated.sender.toString()).emit("messageDelivered", { msgId, deliveredBy:userId });
-            }
+    socket.join(userId.toString());
+    // console.log(`User ${userId} joined the room`);
+    // console.log("socket.activeParticipants", socket.activeParticipants, "socket.activeConvoId", socket.activeConvoId)
+    if(socket.activeParticipants && socket.activeConvoId){
+      socket.activeParticipants.forEach(memberId => {
+        if(memberId.toString() !== userId){
+          io.to(memberId.toString()).emit("participant-joined-active", { activeConvoId_otherSide:socket.activeConvoId, sender:userId });
+          console.log("participant-joined-active (connected)", socket.activeConvoId);
         }
-        catch(err){
-            console.error("Error updating delivery: ", err)
+      })
+    }
+
+    // optional: let frontend know connection is good
+    socket.emit("connected", { userId });
+
+    socket.on("user_logout", async({userId})=>{
+      await updateUserLastSeen(userId);
+      io.emit("user_disconnected", {userId})
+    })
+
+    // cleanup when disconnected
+    socket.on("disconnect", async() => {
+      // console.log(`User ${userId} disconnected`);
+      // console.log("socket.activeParticipants", socket.activeParticipants, "socket.activeConvoId", socket.activeConvoId)
+      if(socket.activeParticipants && socket.activeConvoId){
+        socket.activeParticipants.forEach(memberId => {
+          if(memberId.toString() !== userId){
+            io.to(memberId.toString()).emit("participant-left-active", { activeConvoId_otherSide:null, sender:userId });
+            console.log("participant-left-active (disconnect)", socket.activeConvoId);
+          }
+        })
+      }
+
+      socket.activeConvoId = null;
+      socket.activeParticipants = [];
+
+      if(userId) {  
+        io.emit("user_disconnected", { userId });
+        updateUserLastSeen(userId);
+      }
+    });
+  } 
+  catch (err) {
+    // console.log("Invalid token:", err.message);
+    socket.disconnect();
+  }
+
+  // receiving acknowledge from receiver that they got the message
+  socket.on("message-delivered", ({msgId, sender, receiver, activeConvoId})=>{
+    console.log("message-delivered received at server", msgId, receiver, activeConvoId)
+    // socket.emit("message-delivery-confirmed", { msgId, receiver });
+    io.to(sender).emit("message-delivery-confirmed", { msgId, receiver })
+  })
+
+  // receiving activeConvoId from any participant
+  socket.on("active-convo-id", ({sender, activeConvoId, prevParticipants, activeParticipants})=>{
+    // console.log("active-convo-id received at server", activeConvoId, sender, prevParticipants, activeParticipants)
+    socket.activeConvoId = activeConvoId || null; // store activeConvoId in socket session
+    socket.activeParticipants = activeParticipants || []; // store activeParticipants in socket session
+
+    if (!activeConvoId) {
+      // convo closed -> notify prevParticipants
+      prevParticipants.forEach(memberId => {
+        if (memberId.toString() !== sender) {
+          io.to(memberId.toString()).emit("participant-left-active", { activeConvoId_otherSide: null, sender });
+          console.log("participant-left-active (null convo)", null);
         }
+      });
+      return;
+    }
+
+    // inform all other participants about this change
+    prevParticipants.forEach(memberId => {
+      if (memberId.toString() !== sender) {
+        io.to(memberId.toString()).emit("participant-left-active", { activeConvoId_otherSide:activeConvoId, sender });
+        console.log("participant-left-active", activeConvoId);
+        updateUserLastSeen(memberId);
+      }
     });
-
-    // --- READ ---
-    socket.on("messageRead", async ({ convoId, userId }) => {
-        try {
-            // Mark all messages in convo as read by this user
-            await messageModel.updateMany(
-                {
-                    conversationId: convoId,
-                    sender: { $ne: userId },
-                    readBy: { $ne: userId }
-                },
-                { $addToSet: { readBy: userId } }
-            );
-
-            // Notify sender(s)
-            io.emit("messageRead", { convoId, readBy: userId });
-        } catch (err) {
-            console.error("Error updating read: ", err);
-        }
+    activeParticipants.forEach(memberId => {
+      if (memberId.toString() !== sender) {
+        io.to(memberId.toString()).emit("participant-joined-active", { activeConvoId_otherSide:activeConvoId, sender });
+        console.log("participant-joined-active", activeConvoId);
+      }
     });
+  })
 
-    // --- TYPING ---
-    socket.on("typing", ({ convoId, userId }) => {
-        socket.to(convoId).emit("typing", { userId });
-    });
+  // receiving typing indicator from participant
+  socket.on("typing", ({sender, convoId, receivers})=>{
+    // console.log("typing received at server", sender, convoId, receivers)
+    receivers.forEach(receiverId => {
+      io.to(receiverId).emit("typing", { sender, convoId });
+    })
+  })
+  socket.on("stoppedTyping", ({sender, convoId, receivers})=>{
+    receivers.forEach(receiverId=>{
+      io.to(receiverId).emit("stoppedTyping", { sender, convoId });
+    })
+  })
 
-    socket.on("stopTyping", ({ convoId, userId }) => {
-        socket.to(convoId).emit("stopTyping", { userId });
-    });
-
-
-    // --- NEW CONVERSATION ---
-    socket.on("newConvo", (data) => {
-        io.emit("updatedConvoList", {
-            convoId: data.convoId,
-            lastMessage: data.text,
-            createdAt: data.createdAt,
-        });
-    });
-
-    // --- DISCONNECT ---
-    socket.on("disconnect", () => {
-        setUserStatus(userId, "offline", Date.now());
-        io.emit("userStatus", { userId, status: "offline", lastSeen: Date.now() });
-        console.log("user disconnected", socket.id);
-    });
+  
 });
 
-
-//DB Connection
-// mongoose.connect(process.env.MONGODB_URI, 
-//     {
-//         useNewUrlParser: true,
-//         useUnifiedTopology: true,
-//         ssl: true,
-//         tlsAllowInvalidCertificates: false
-//     }
-// )
-// .then(()=> console.log("MongoDB Connected"))
-// .catch(err => console.error("MongoDB connection error: ", err))
 app.use((req, res, next) => {
   req.io = io;
   next();
 });
-app.use("/api", router)
+app.use("/api", router);
 
 //start server
 // app.listen(PORT, ()=>{
 //     console.log(`Server is running on http://localhost:${PORT}`)
 // })
-server.listen(PORT, ()=>{
-    console.log(`Server is running on http://localhost:${PORT}`)
-})
+server.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});

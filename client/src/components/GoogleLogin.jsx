@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FcGoogle } from "react-icons/fc";
 import SummaryApi from "../helpers/SummaryApi";
-import socket from "../helpers/socket";
+import { connectSocket } from "../socket/socket";
 
 const GoogleLogin = () => {
     const navigate = useNavigate();
@@ -12,8 +12,8 @@ const GoogleLogin = () => {
     const googleBtnRef = useRef(null);
     const [isGoogleSDKReady, setIsGoogleSDKReady] = useState(false);
     const [isButtonRendered, setIsButtonRendered] = useState(false);
-
     const [loading, setLoading] = useState(false)
+    const socket = connectSocket();
 
     useEffect(() => {
         // Function to check if Google SDK is loaded
@@ -102,10 +102,11 @@ const GoogleLogin = () => {
             console.log("Google auth response:", data);
 
             if (data.token && data.user) {
-                socket.emit("join", data.user.userId) // join user room for socket
+                // socket.emit("join", data.user.userId) // join user room for socket
                 // Store JWT token and user data in localStorage
                 localStorage.setItem("authToken", data.token);
                 localStorage.setItem("userData", JSON.stringify(data.user));
+                connectSocket();
                 
                 toast.success("Successfully logged in with Google!");
                 navigate(from, { replace: true });

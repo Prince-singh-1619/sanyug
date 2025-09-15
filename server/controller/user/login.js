@@ -36,7 +36,7 @@ async function loginController(req, res){
                 lastName: user.lastName,
                 username: user.username,
                 email: user.email,
-                userTag: user.userTag,
+                // userTag: user.userTag,
                 profilePic: user.profilePic,
             },
             success: true,

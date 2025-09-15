@@ -16,10 +16,12 @@ async function fetchMessageController(req, res){
                 readBy: { $ne: userId },
                 sender: { $ne: userId }
             },
-            { $addToSet: { 
-                deliveredTo:userId, 
-                readBy: userId 
-            }}
+            { $addToSet: 
+                { 
+                    deliveredTo:userId, 
+                    readBy: userId 
+                }
+            }
         )
 
         return res.status(200).json({
