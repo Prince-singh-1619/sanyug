@@ -4,6 +4,7 @@ import storage from "redux-persist/lib/storage"; // uses localStorage
 // import {thunk} from "redux-thunk";
 
 // import slices
+import userReducer from './slices/userSlice'
 import chatReducer from './slices/chatSlice'
 import convoReducer from './slices/convoSlice'
 
@@ -11,7 +12,7 @@ import convoReducer from './slices/convoSlice'
 const rootReducer = combineReducers({
     chat: chatReducer,
     convo: convoReducer,
-    // user: userReducer,   // (future)
+    user: userReducer, 
     // settings: settingsReducer,
 });
 
@@ -19,7 +20,7 @@ const rootReducer = combineReducers({
 const persistConfig = {
     key: "root",
     storage,
-    whitelist: ["chat"], // only persist chat (can add user, settings later)
+    whitelist: ["user", "chat", "convo"], // only persist chat (can add user, settings later)
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

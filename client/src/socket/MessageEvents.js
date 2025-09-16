@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import { connectSocket } from "./socket";
-import { addMessage, markMessageAsRead, markMessageDelivered } from "../redux/slices/chatSlice";
+import { addMessage, deleteMessage, markMessageAsRead, markMessageDelivered } from "../redux/slices/chatSlice";
 import { useDispatch, useSelector } from "react-redux";
-import { markLastMsgDelivered, markLastMsgRead, markUserOffline, setLastMessage } from "../redux/slices/convoSlice";
+import { markLastMsgDelivered, markLastMsgRead, markUserOffline, setLastMessage, updateUnreadCount } from "../redux/slices/convoSlice";
 
 const socket = connectSocket();
 
@@ -16,11 +16,6 @@ const MessageEvents = () => {
     const { activeConvoId_otherSide } = useSelector(state=> state.chat);
     // console.log("MessageEvents activeConvoId:", activeConvoId);
 
-    // const { convoList } = useSelector((state)=>state.convo)
-    // const activeConvo = convoList.find(c => c.convoId === activeConvoId);
-    // const participants = activeConvo ? activeConvo.participants.map(p => p._id) : [];
-    // console.log("participants in MessageEvents:", participants);
-
     // for receiver
     useEffect(() => {
         socket.on("new-message-received", (msg) => {
@@ -28,6 +23,7 @@ const MessageEvents = () => {
             // console.log( "convoId being used:", msg.conversationId, typeof msg.conversationId );
 
             dispatch(addMessage({ message: msg }));
+            dispatch(updateUnreadCount({convoId:msg.conversationId, activeConvoId_otherSide}))
             dispatch(setLastMessage({ convoId: msg.conversationId, msg }));
             // dispatch(markMessageAsRead)
             // receiver to sender
@@ -95,6 +91,13 @@ const MessageEvents = () => {
             socket.off("participant-joined-active", handleJoined);
         };
     }, [socket, dispatch]);
+
+    // on message deletion
+    useEffect(()=>{
+        socket.on("message-delete-received", ({msgId, convoId})=>{
+            dispatch(deleteMessage({msgId, convoId}));
+        })
+    })
 
 
     return null;

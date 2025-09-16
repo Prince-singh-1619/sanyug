@@ -1,5 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit"
-import { setLastMessage } from "./convoSlice";
+import { createSlice, current } from "@reduxjs/toolkit"
 
 const initialState = {
     activeChat: null,
@@ -96,6 +95,32 @@ const chatSlice = createSlice({
             const {convoId, messages} = action.payload;
             state.messageList[convoId] = messages;
         },
+        // fix this one
+        setUnreadMessages: (state, action)=>{
+            const { convoId, messages, userId } = action.payload
+            // const msgArray = Array.isArray(messages) ? messages : [messages]
+            // console.log("state.messageList", current(state.messageList))
+            // if(!state.messageList[convoId]){
+            //     state.messageList[convoId] = { all:[], unread:[] }
+            // }else if (Array.isArray(state.messageList[convoId])) {
+            //     // migrate old array shape into { all, unread }
+            //     state.messageList[convoId] = { all: state.messageList[convoId], unread: [] }
+            // }
+
+            // msgArray.forEach(msg=>{
+            //     const alreadyInAll  = state.messageList[convoId].unread.some(m=>m._id===msg._id)
+            //     if(!alreadyInAll ){
+            //         state.messageList[convoId].unread.push(msg);
+            //     }
+            //     const isUnread = msg.sender!==userId && !msg.readBy.includes(userId)
+            //     if(isUnread){
+            //         const alreadyInUnread = state.messageList[convoId].unread.some(m=>m._id===msg._id)
+            //         if(!alreadyInUnread){
+            //             state.messageList[convoId].unread.push(msg)
+            //         }
+            //     }
+            // })
+        },
         deleteMessage: (state, action) =>{ // not functioning properly, check again
             const {msgId, convoId} = action.payload
             if (!state.messageList[convoId]) return;
@@ -120,6 +145,7 @@ export const {
     markMessageDelivered,
     markMessageAsRead,
     setMessages, 
+    setUnreadMessages,
     deleteMessage, 
     clearChatState 
 } = chatSlice.actions;

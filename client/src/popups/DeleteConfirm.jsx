@@ -4,17 +4,24 @@ import SummaryApi from '../helpers/SummaryApi';
 import { deleteMessage } from '../redux/slices/chatSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-hot-toast';
+import { connectSocket } from '../socket/socket';
 
 const DeleteConfirm = ({msgId, open, setOpen}) => {
-    console.log("msgId frontend: ", msgId)
+    // console.log("msgId frontend: ", msgId)
     // const [open, setOpen] = useState(false);
     const dispatch = useDispatch()
     // const [deleteBox, setDeleteBox] = useState(false);
-    const {activeConvoId} = useSelector((state)=>state.convo)
+    const {activeConvoId, convoList} = useSelector((state)=>state.convo)
 
     const authToken = localStorage.getItem("authToken");
+    const userData = JSON.parse(localStorage.getItem("userData"))
+    const userId = userData?.userId
 
-    //   const handleDeleteClick = () => setOpen(true);
+    const socket = connectSocket()
+
+    const receivers = convoList.find(c=>c.convoId===activeConvoId).participants.filter(p => p._id !== userId).map(p=>p._id) || [];
+    console.log("getParticipants", receivers)
+
     const handleDelete = async() =>{
       if (!msgId || msgId.toString().startsWith("temp")) {
         console.warn("Cannot delete a pending message yet");
@@ -44,6 +51,7 @@ const DeleteConfirm = ({msgId, open, setOpen}) => {
           console.log(resData.message);
           // No need to update UI here, socket will handle it
           dispatch(deleteMessage({msgId, convoId:activeConvoId}))
+          socket.emit("message-deleted", ({msgId, convoId:activeConvoId, receivers}))
           setOpen(false);
         }
       } catch (error) {

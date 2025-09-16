@@ -115,6 +115,18 @@ const convoSlice = createSlice({
                 msg.readBy.push(sender)
             }
         },
+        updateUnreadCount: (state, action)=>{
+            const { convoId, activeConvoId_otherSide } = action.payload
+            if(activeConvoId_otherSide===state.activeConvoId) return;
+            const convo = state.convoList.find(c=>c.convoId===convoId)
+            convo.unreadCount += 1;
+        },
+        resetUnreadCount: (state, action)=>{
+            const { convoId } = action.payload
+            const convo = state.convoList.find(c=>c.convoId===convoId)
+            console.log("convo in resetUnreadCount:", convo)
+            convo.unreadCount = 0;
+        },
         markUserOffline: (state, action)=>{
             const { user } = action.payload;
             const convo = state.convoList.find(c=>c.participants.some(p=>p._id===user));
@@ -146,6 +158,8 @@ export const {
     updateLastTempMsgId,
     markLastMsgDelivered,
     markLastMsgRead,
+    updateUnreadCount,
+    resetUnreadCount,
     markUserOffline,
     resetAllTyping,
     clearConvoState,

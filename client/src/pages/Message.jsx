@@ -19,7 +19,7 @@ import ChatDropdown from '../components/ChatDropdown';
 dayjs.extend(calendar);
 import { useDispatch, useSelector } from "react-redux";
 // import { addMessage, setMessages, deleteMessage, updateTempMsgId, markMessageAsRead, markMessageDelivered } from "../redux/slices/chatSlice";
-import { addMessage, setMessages, updateTempMsgId } from "../redux/slices/chatSlice";
+import { addMessage, setMessages, setUnreadMessages, updateTempMsgId } from "../redux/slices/chatSlice";
 import DeleteConfirm from '../popups/DeleteConfirm';
 import MsgIndicator from '../components/MsgIndicator';
 
@@ -28,7 +28,6 @@ import { setLastMessage, updateLastTempMsgId } from '../redux/slices/convoSlice'
 
 
 const Message = () => {
-  // const {convoId:urlConvoId} = useParams();
   
   const [message, setMessage] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
@@ -36,6 +35,9 @@ const Message = () => {
   // const [deleteBox, setDeleteBox] = useState(false)
   const [deleteMsgId, setDeleteMsgId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false)
+  // const [showUnreadDivider, setShowUnreadDivider] = useState(false)
+  const [firstUnreadId, setFirstUnreadId] = useState(null)
+  const [unreadNumber, setUnreadNumber] = useState(0)
 
   const dispatch = useDispatch()
   const {activeChat, messageList, activeConvoId_otherSide} = useSelector((state)=>state.chat)
@@ -48,15 +50,9 @@ const Message = () => {
   const authToken = localStorage.getItem("authToken");
   const userData = JSON.parse(localStorage.getItem("userData"))
   const userId = userData?.userId
-  // console.log("userId in Message", userId)
 
-  // console.log("convoUserTyping", convoUserTyping[convoId]);
   const typingUser = convoUserTyping[activeConvoId] || [] 
   const isTyping = typingUser.some(id => id !== userId);
-
-  let readMessages = [];
-  let unreadMessages = [];
-  // console.log("isTyping", isTyping)
   
   const socket = connectSocket();
 
@@ -180,12 +176,12 @@ const Message = () => {
 
       const resData = await res.json()
       if(resData.success){
-        readMessages = resData.data.filter(m => m.readBy.includes(userId));
-        unreadMessages = resData.data.filter(m => !m.readBy.includes(userId) && m.sender.toString() === userId);
-        console.log("readMessages", readMessages, "unreadMessages", unreadMessages)
-        // console.log("MessageList from getMessages", resData.data)
-        // setMessageList(resData.data)
+        // readMessages = resData.data.filter(m => m.readBy.includes(userId));
+        // const unreadMessages = resData.data.filter(m => !m.readBy.includes(userId) && m.sender.toString() === userId);
+        // console.log("readMessages", readMessages, "unreadMessages", unreadMessages)
+        console.log("MessageList from getMessages", resData.data)
         dispatch(setMessages({convoId, messages:resData.data})) //store in redux
+        // dispatch(setUnreadMessages({convoId, messages:unreadMsgs, userId}))
         toast.success(resData.message)
       }
       else{
@@ -206,42 +202,6 @@ const Message = () => {
       // socket.emit("messageRead", {convoId, userId}) // mark all as read
     }
   }, [convoId])
-
-  // // transferred to another file
-  // // for receiver
-  // useEffect(()=>{
-  //   socket.on("new-message-received", (msg)=>{
-  //     console.log("msg received", msg)
-  //     console.log("convoId being used:", msg.conversationId, typeof msg.conversationId);
-
-  //     dispatch(addMessage({ message: msg }));
-  //     // receiver to sender
-  //     socket.emit("message-delivered", { msgId:msg._id, sender:msg.sender, receiver:userId })
-  //   })
-  //   return()=>{
-  //     socket.off("new-message-received")
-  //   }
-  // }, [dispatch, userId])
-
-  // // for sender - confirmation
-  // useEffect(()=>{
-  //   socket.on("message-delivery-confirmed", ({msgId, receiver})=>{
-  //     console.log("msg sent confirmed by server. msgId:", msgId, "receiver:", receiver)
-  //     console.log("my Id:", userId)
-  //     // tempId taken care in http success itself
-  //     dispatch(markMessageDelivered({ msgId, receiver }));
-  //   })
-  //   return()=>{
-  //     socket.off("message-delivery-confirmed")
-  //   }
-  // }, [dispatch, userId])
-
-// for debugging only, remove later
-// const messages = useSelector(state => state.chat.messageList[convoId]);
-// useEffect(() => {
-//   console.log("Messages updated:", messages);
-// }, [messages]);
-
 
   const formatChatTimestamp = (dateString) =>{
     const date = new Date(dateString);
@@ -278,70 +238,7 @@ const Message = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messageList]); // runs whenever messageList updates
 
-  // const handleDelete = async(msgId) =>{
-  //   console.log("deleting...", msgId)
-  //   setIsDeleting(true)
-  //   try {
-  //     const res = await fetch(SummaryApi.deleteMessage.url, {
-  //       method: SummaryApi.deleteMessage.method,
-  //       headers: { 
-  //         "Content-Type": "application/json",
-  //         'Authorization': `Bearer ${authToken}`,
-  //       },
-  //       body: JSON.stringify({ msgId }),
-  //     })
-  //     const resData = await res.json();
-  //     if (resData.success) {
-  //       toast.success(resData.message)
-  //       console.log("Message deleted");
-  //       // No need to update UI here, socket will handle it
-  //       dispatch(deleteMessage({msgId, updatedText:"This message has been deleted"}))
-  //     }
-  //   } catch (error) {
-  //     console.error("Error deleting message", error)
-  //   }
-  //   finally{
-  //     setIsDeleting(false)
-  //     setDeleteBox(false)
-  //   }
-  // }
-
-  // useEffect(() => {
-  //   // socket.on("messageDeleted", (data) => {
-  //     // dispatch(deleteMessage({msgId:data.msgId, updatedText:data.updatedText || "This message has been deleted"}))
-  //     // setMessageList((prev) =>
-  //     //   prev.map((msg) =>
-  //     //     msg._id === data.msgId ? { ...msg, text: data.updatedText } : msg
-  //     //   )
-  //     // );
-  //   });
-
-  //   return () => socket.off("messageDeleted");
-  // }, []);
-
-  // useEffect(()=>{
-  //   socket.on("userstatus", ({userId, status, lastSeen})=>{
-  //     // update UI 
-  //   })
-  // })
-
-  // user typing indicator
-  // useEffect(() => {
-  //   socket.on("typing", ({ userId }) => {
-  //     setTypingUser(userId);
-  //   });
-
-  //   socket.on("stopTyping", ({ userId }) => {
-  //     if (typingUser === userId) setTypingUser(null);
-  //   });
-
-  //   return () => {
-  //     socket.off("typing");
-  //     socket.off("stopTyping");
-  //   };
-  // }, [typingUser]);
 console.log("")
-
 
   // When user types in input box
   const typingTimeoutRef = useRef(null);
@@ -368,6 +265,22 @@ console.log("")
       typingTimeoutRef.current = null;
     }, 1500)
   };
+
+  // unread message count
+  useEffect(()=>{
+    if(messageList[activeConvoId]){
+      const unread = messageList[activeConvoId].filter(m=>!m.readBy.includes(userId) && m.sender!==userId);
+      
+      if(unread.length>0){
+        setFirstUnreadId(unread[0]._id)
+        setUnreadNumber(unread.length)
+      }else{
+        // setShowUnreadDivider(false)
+        setFirstUnreadId(null)
+        setUnreadNumber(0)
+      }
+    }
+  }, [activeConvoId])
 
 // console.log("final",messageList[convoId])
 
@@ -438,12 +351,14 @@ console.log("")
                   
               {/* Messages */}
               {msgs.map((data, index) =>{ 
-                const isFirstUnread = !data.readBy.includes(userId) && data.sender!==userId && (index==0 || msgs[index-1].readBy.includes(userId))
+                // const isFirstUnread = !data.readBy.includes(userId) && data.sender!==userId && (index==0 || msgs[index-1].readBy.includes(userId))
+                const isFirstUnread = data._id===firstUnreadId
                 // return (<div key={msg._id}>{isFirstUnread && <span>{UnreadMessages.length} new Messages</span>}</div>)
                 return(
                 <div key={data._id || index} className={`group mb-2 px-2 ${data.sender===userId ? "place-items-end" : "place-items-start" }`}>
                   {/* Unread divider */}
-                  {isFirstUnread && (<div className="w-1/2 flex justify-center items-center mx-auto text-nowrap my-2 bg-gray-800"> <span className="px-4 py-1 rounded-full  text-white text-sm">{unreadMessages.length} Unread Messages</span> </div>)}                  
+                  {isFirstUnread && unreadNumber>0 && (<div className="w-1/2 flex justify-center items-center mx-auto text-nowrap my-2 bg-gray-800"> <span className="px-4 py-1 rounded-full  text-white text-sm">{unreadNumber} Unread Messages</span> </div>)}                  
+                  {/* {showUnreadDivider && (<div className="w-1/2 flex justify-center items-center mx-auto text-nowrap my-2 bg-gray-800"> <span className="px-4 py-1 rounded-full  text-white text-sm">{unreadMessages.length} Unread Messages </span> </div>)} */}
 
                   <div className={` relative flex w-fit max-w-[80%] h-fit text-lg font-medium border py-1 px-2 rounded-md ${data.sender===userId ? "rounded-br-none bg-green-400 dark:bg-green-700" : "rounded-bl-none bg-slate-300 dark:bg-black/25"}  `}>
                     <p className={`${data.isRemoved ? 'italic text-red-800 dark:text-red-600 opacity-75':''}`}>{data.text} </p>

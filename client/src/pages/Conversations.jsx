@@ -17,7 +17,7 @@ import ResizableDiv from '../helpers/ResizableDiv'
 import { Outlet, useNavigate, useOutlet } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { setActiveChat } from '../redux/slices/chatSlice'
-import { setActiveConvo, setConvos } from '../redux/slices/convoSlice'
+import { resetUnreadCount, setActiveConvo, setConvos } from '../redux/slices/convoSlice'
 import MsgIndicator from '../components/MsgIndicator'
 import { Socket } from 'socket.io-client'
 import { connectSocket } from '../socket/socket'
@@ -118,7 +118,7 @@ const Conversations = () => {
                         lastSeen:  formatChatTimestamp(otherUser.lastSeen),
                         // createdAt: formatChatTimestamp(convo?.lastMessage?.createdAt)
                         createdAt: convo?.lastMessage?.createdAt ? formatChatTimestamp(convo?.lastMessage.createdAt) : formatChatTimestamp(convo.createdAt),
-                        unreadCount: convo.unreadCount
+                        unreadCount: convo?.unreadCount || 0
                     };
                 }
             });
@@ -151,6 +151,7 @@ const Conversations = () => {
         // dispatch(setActiveChat({ chat: selectedChat, convoId: selectedChat.convoId }))
         dispatch(setActiveChat({ chat:selectedChat }))
         dispatch(setActiveConvo({ newConvoId:convoId, participants:selectedChat.participants.map(p=>p._id) }))
+        dispatch(resetUnreadCount({convoId}))
 
         navigate(`/conversations/${convoId}`, 
             {state: {activeChat:selectedChat}}
