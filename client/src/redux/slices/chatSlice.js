@@ -1,4 +1,4 @@
-import { createSlice, current } from "@reduxjs/toolkit"
+import { createSlice } from "@reduxjs/toolkit"
 
 const initialState = {
     activeChat: null,
@@ -96,8 +96,8 @@ const chatSlice = createSlice({
             state.messageList[convoId] = messages;
         },
         // fix this one
-        setUnreadMessages: (state, action)=>{
-            const { convoId, messages, userId } = action.payload
+        // setUnreadMessages: (state, action)=>{
+            // const { convoId, messages, userId } = action.payload
             // const msgArray = Array.isArray(messages) ? messages : [messages]
             // console.log("state.messageList", current(state.messageList))
             // if(!state.messageList[convoId]){
@@ -120,7 +120,7 @@ const chatSlice = createSlice({
             //         }
             //     }
             // })
-        },
+        // },
         deleteMessage: (state, action) =>{ // not functioning properly, check again
             const {msgId, convoId} = action.payload
             if (!state.messageList[convoId]) return;
@@ -145,7 +145,7 @@ export const {
     markMessageDelivered,
     markMessageAsRead,
     setMessages, 
-    setUnreadMessages,
+    // setUnreadMessages,
     deleteMessage, 
     clearChatState 
 } = chatSlice.actions;

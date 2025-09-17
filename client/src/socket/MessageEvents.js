@@ -1,8 +1,9 @@
 import React, { useEffect } from "react";
 import { connectSocket } from "./socket";
-import { addMessage, deleteMessage, markMessageAsRead, markMessageDelivered } from "../redux/slices/chatSlice";
+import { addMessage, clearChatState, deleteMessage, markMessageAsRead, markMessageDelivered } from "../redux/slices/chatSlice";
 import { useDispatch, useSelector } from "react-redux";
-import { markLastMsgDelivered, markLastMsgRead, markUserOffline, setLastMessage, updateUnreadCount } from "../redux/slices/convoSlice";
+import { clearConvoState, markLastMsgDelivered, markLastMsgRead, markUserOffline, setLastMessage, updateUnreadCount } from "../redux/slices/convoSlice";
+import { decryptMessage } from "../helpers/cryption";
 
 const socket = connectSocket();
 
@@ -18,16 +19,19 @@ const MessageEvents = () => {
 
     // for receiver
     useEffect(() => {
-        socket.on("new-message-received", (msg) => {
+        socket.on("new-message-received", async(msg) => {
             console.log("msg received", msg);
+            const plainText = await decryptMessage(msg.text, msg.conversationId);
+            const orgMsg =  {...msg, text: plainText, }// replace encrypted with decrypted
+            // };
             // console.log( "convoId being used:", msg.conversationId, typeof msg.conversationId );
 
-            dispatch(addMessage({ message: msg }));
-            dispatch(updateUnreadCount({convoId:msg.conversationId, activeConvoId_otherSide}))
-            dispatch(setLastMessage({ convoId: msg.conversationId, msg }));
+            dispatch(addMessage({ message: orgMsg }));
+            dispatch(updateUnreadCount({convoId:orgMsg.conversationId, activeConvoId_otherSide}))
+            dispatch(setLastMessage({ convoId: orgMsg.conversationId, msg:orgMsg }));
             // dispatch(markMessageAsRead)
             // receiver to sender
-            socket.emit("message-delivered", { msgId:msg._id, sender:msg.sender, receiver:userId, activeConvoId});
+            socket.emit("message-delivered", { msgId:orgMsg._id, sender:orgMsg.sender, receiver:userId, activeConvoId});
             console.log("message-delivered emitted from receiver");
         });
         return () => {
@@ -61,6 +65,8 @@ const MessageEvents = () => {
     // on refresh/reconnect, inform server about my activeConvoId again
     useEffect(()=>{
         const handleBeforeUnload = () =>{
+            dispatch(clearChatState());
+            dispatch(clearConvoState());
             socket.emit("active-convo-id", ({ sender:userId, activeConvoId:null, prevParticipants:activeParticipants, activeParticipants:[] }));
         }
         window.addEventListener("beforeunload", handleBeforeUnload);

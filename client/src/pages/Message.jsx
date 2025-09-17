@@ -8,24 +8,22 @@ import { BsEmojiSmile } from "react-icons/bs";
 import { MdAttachFile, MdDelete } from "react-icons/md";
 import SummaryApi from '../helpers/SummaryApi';
 // import { toast } from 'react-toastify';
-// import TextOutline from '../helpers/TextOutline';
 import { HiRefresh } from "react-icons/hi";
 import { AiOutlineSelect } from 'react-icons/ai';
 import { connectSocket } from '../socket/socket';
 import dayjs from "dayjs";
 import calendar from "dayjs/plugin/calendar";
 import ChatDropdown from '../components/ChatDropdown';
-// import { useLocation } from 'react-router-dom';
 dayjs.extend(calendar);
 import { useDispatch, useSelector } from "react-redux";
-// import { addMessage, setMessages, deleteMessage, updateTempMsgId, markMessageAsRead, markMessageDelivered } from "../redux/slices/chatSlice";
-import { addMessage, setMessages, setUnreadMessages, updateTempMsgId } from "../redux/slices/chatSlice";
+import { addMessage, setMessages, updateTempMsgId } from "../redux/slices/chatSlice";
 import DeleteConfirm from '../popups/DeleteConfirm';
 import MsgIndicator from '../components/MsgIndicator';
-
 import { toast } from 'react-hot-toast';
 import { setLastMessage, updateLastTempMsgId } from '../redux/slices/convoSlice';
-
+import EmojiPicker from "emoji-picker-react"
+import { motion, AnimatePresence } from "framer-motion";
+import { encryptMessage, decryptMessage } from '../helpers/cryption'
 
 const Message = () => {
   
@@ -38,6 +36,9 @@ const Message = () => {
   // const [showUnreadDivider, setShowUnreadDivider] = useState(false)
   const [firstUnreadId, setFirstUnreadId] = useState(null)
   const [unreadNumber, setUnreadNumber] = useState(0)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [chatTheme, setChatTheme] = useState(localStorage.getItem("theme"))
+  const pickerRef = useRef(null);
 
   const dispatch = useDispatch()
   const {activeChat, messageList, activeConvoId_otherSide} = useSelector((state)=>state.chat)
@@ -105,62 +106,69 @@ const Message = () => {
       }
     }))
     
+    const encrypted = await encryptMessage(message, convoId)
 
-    // add redux to update convoList with last message and icon
+    console.log("encrypted:", encrypted)
+    const payload = {
+      convoId,
+      sender: userId,
+      text: encrypted,
+      media: selectedFile ? { type: "image", url: selectedFile } : null,
+      // totalReceivers: activeChat?.isGroup ? (activeChat?.members?.length -1) : 1,
+      // deliveredTo: [],
+      // readBy: [],
+      // isRead: false,
+      // createdAt: new Date().toISOString()
+    }
 
-    
-      console.log('Sending message:', message);
-      console.log('Selected file:', selectedFile);
+    setMessage('');
+    setSelectedFile(null);
 
-      const payload = {
-        convoId,
-        sender: userId,
-        text: message,
-        media: selectedFile ? { type: "image", url: selectedFile } : null,
-        // totalReceivers: activeChat?.isGroup ? (activeChat?.members?.length -1) : 1,
-        // deliveredTo: [],
-        // readBy: [],
-        // isRead: false,
-        // createdAt: new Date().toISOString()
+    // using react hot toast here
+    const res = await toast.promise( fetch(SummaryApi.sendMessage.url, {
+      method: SummaryApi.sendMessage.method,
+      headers:{
+        'Content-type' : 'application/json',
+        'Authorization': `Bearer ${authToken}`,
+      },
+      body: JSON.stringify(payload)
+      }), 
+      {
+        loading: "Sending...",
+        success: "Message sent",
+        error: "Failed to send message"
       }
+    );
+    // turn response into error if not ok
+    if (!res.ok) {
+      throw new Error(`Request failed with status ${res.status}`);
+    }
 
-      setMessage('');
-      setSelectedFile(null);
-
-      // using react hot toast here
-      const res = await toast.promise( fetch(SummaryApi.sendMessage.url, {
-        method: SummaryApi.sendMessage.method,
-        headers:{
-          'Content-type' : 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-        body: JSON.stringify(payload)
-        }), 
-        {
-          loading: "Sending...",
-          success: "Message sent",
-          error: "Failed to send message"
-        }
-      );
-      // turn response into error if not ok
-      if (!res.ok) {
-        throw new Error(`Request failed with status ${res.status}`);
-      }
-
-      const resData = await res.json();
-      if(resData.success){
-        // toast.success(resData.message)
-        // Emit live events to other clients
-        dispatch(updateTempMsgId({ convoId, tempId, newId:resData.data._id }));
-        dispatch(updateLastTempMsgId({ convoId, tempId, newId:resData.data._id }))
-        // socket.emit("sender-message-sent", payload)
-        // console.log("Updating temp msg:", { convoId, tempId, newId: resData.data._id });
-      }
-      else{
-        // toast.warning(resData.message)
-      }
+    const resData = await res.json();
+    if(resData.success){
+      // toast.success(resData.message)
+      // Emit live events to other clients
+      dispatch(updateTempMsgId({ convoId, tempId, newId:resData.data._id }));
+      dispatch(updateLastTempMsgId({ convoId, tempId, newId:resData.data._id }))
+    }
+    else{
+      // toast.warning(resData.message)
+    }
     
   };
+
+  const decryptAllMessages = async(messages, convoId) => {
+    const decrypted = await Promise.all(
+      messages.map(async (msg) => {
+        const plainText = await decryptMessage(msg.text, convoId);
+        return {
+          ...msg,
+          text: plainText, // replace encrypted with decrypted
+        };
+      })
+    );
+    return decrypted;
+  }
 
   const handleGetMessages = async() =>{
     console.log("fetching messages..")
@@ -176,12 +184,13 @@ const Message = () => {
 
       const resData = await res.json()
       if(resData.success){
+        const orgMsg = await decryptAllMessages(resData.data, convoId)
         // readMessages = resData.data.filter(m => m.readBy.includes(userId));
         // const unreadMessages = resData.data.filter(m => !m.readBy.includes(userId) && m.sender.toString() === userId);
         // console.log("readMessages", readMessages, "unreadMessages", unreadMessages)
         console.log("MessageList from getMessages", resData.data)
-        dispatch(setMessages({convoId, messages:resData.data})) //store in redux
-        // dispatch(setUnreadMessages({convoId, messages:unreadMsgs, userId}))
+        // dispatch(setMessages({convoId, messages:resData.data})) //store in redux
+        dispatch(setMessages({convoId, messages:orgMsg})) //store in redux
         toast.success(resData.message)
       }
       else{
@@ -233,17 +242,16 @@ const Message = () => {
     return grouped;
   }
 
+  // scroll to bottom
   const bottomRef = useRef(null);
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messageList]); // runs whenever messageList updates
 
-console.log("")
-
   // When user types in input box
   const typingTimeoutRef = useRef(null);
-  const handleTyping = (e) => {
-    setMessage(e.target.value);
+  const handleTyping = (value) => {
+    setMessage(value);
 
     const convo = convoList.find(c=>c.convoId===activeConvoId)
     if(!convo) return;
@@ -266,6 +274,11 @@ console.log("")
     }, 1500)
   };
 
+  const onEmojiClick = (emojiObject) =>{
+    const newMessage = message + emojiObject.emoji
+    handleTyping(newMessage);
+  }
+
   // unread message count
   useEffect(()=>{
     if(messageList[activeConvoId]){
@@ -281,6 +294,23 @@ console.log("")
       }
     }
   }, [activeConvoId])
+
+  // for click outside emoji
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    if (showEmojiPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showEmojiPicker]);
 
 // console.log("final",messageList[convoId])
 
@@ -335,6 +365,7 @@ console.log("")
         }
 
         <div className="w-full h-full flex flex-col mt-2 mb-4">
+          <span className='text-yellow-800 dark:text-yellow-300 w-fit mx-auto bg-slate-300 dark:bg-black/25 px-4 py-1 rounded-lg border'>Your messages on Sanyug are end to end encrypted</span>
           {Object.entries(groupMessagesByDate(messageList[convoId] || [])).map(([date, msgs]) => (
             <div key={date}>
               {/* Date Divider */}
@@ -396,7 +427,7 @@ console.log("")
       </div>
 
       {/* Footer - Message Input */}
-      <footer className='h-20 w-full p-4 bg-gray-300 dark:bg-gray-600 border-t border-gray-200 dark:border-gray-700 rounded-b-lg'>
+      <footer className='relative h-20 w-full p-4 bg-gray-300 dark:bg-gray-600 border-t border-gray-200 dark:border-gray-700 rounded-b-lg'>
         <div className='flex items-center gap-3'>
           {/* File Upload */}
           <div className='flex items-center gap-2'>
@@ -414,19 +445,30 @@ console.log("")
             >
               <TbCloudUpload className='text-xl' />
             </label>
-            <button 
-              className='p-2 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors'
-              title="Add emoji"
-            >
+
+            <button onClick={()=>setShowEmojiPicker(!showEmojiPicker)} className='p-2 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors' title="Add emoji">
               <BsEmojiSmile className='text-xl' />
             </button>
+            <AnimatePresence >
+              {showEmojiPicker && (
+                <motion.div
+                  ref={pickerRef}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ duration: 0.25 }} 
+                  className='absolute bottom-20 left-6'>
+                  <EmojiPicker theme={chatTheme==='dark'?'dark':'light'} onEmojiClick={onEmojiClick} />
+                </motion.div>
+              )}
+            </AnimatePresence >
           </div>
 
           {/* Message Input */}
           <div className='flex-1 relative'>
             <textarea
               value={message}
-              onChange={handleTyping}
+              onChange={(e) => handleTyping(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Type a message..."
               className='input-field w-full p-3 pr-12 rounded-lg focus:ring-2 '

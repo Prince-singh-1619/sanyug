@@ -1,6 +1,6 @@
 import './App.css'
 import Register from './pages/Register'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Slide, ToastContainer } from 'react-toastify'
 import Login from './pages/Login'
 import ForgotPassword from './pages/ForgotPassword'
@@ -11,6 +11,8 @@ import MyProfile from './pages/MyProfile'
 import { Toaster } from "react-hot-toast";
 import MessageEvents from './socket/MessageEvents'
 import TypingEvents from './socket/TypingEvents'
+// import ResizableDiv from './helpers/ResizableDiv'
+// import ResizableLayout from './helpers/div'
 
 const App = () => {
 
@@ -34,11 +36,12 @@ const App = () => {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Navigate to="/conversations"/>} />
           <Route path="/conversations" element={<Conversations />}>
             <Route path=":convoId" element={<Message />} />
           </Route>
           <Route path="/my-profile" element={<MyProfile />} />
+          {/* <Route path="/setting" element={<ResizableLayout   />} /> */}
         </Routes>
       </main>
     </BrowserRouter>

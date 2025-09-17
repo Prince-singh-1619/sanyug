@@ -227,7 +227,7 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     @{searchResult.username}
                   </p>
-                  <div className="flex items-center gap-2 mt-1">
+                  {/* <div className="flex items-center gap-2 mt-1">
                     <div className={`w-2 h-2 rounded-full ${
                       searchResult.status === 'online' 
                         ? 'bg-green-500' 
@@ -236,7 +236,7 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
                     <span className="text-xs text-gray-500 dark:text-gray-400">
                       {searchResult.status}
                     </span>
-                  </div>
+                  </div> */}
                 </div>
                 <button
                   onClick={handleAddToChat}

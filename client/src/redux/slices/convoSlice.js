@@ -116,8 +116,8 @@ const convoSlice = createSlice({
             }
         },
         updateUnreadCount: (state, action)=>{
-            const { convoId, activeConvoId_otherSide } = action.payload
-            if(activeConvoId_otherSide===state.activeConvoId) return;
+            const { convoId } = action.payload
+            if(convoId===state.activeConvoId) return;
             const convo = state.convoList.find(c=>c.convoId===convoId)
             convo.unreadCount += 1;
         },
