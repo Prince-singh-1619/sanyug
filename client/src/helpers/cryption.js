@@ -28,6 +28,8 @@ async function getKeyFromConvoId(convoId) {
 }
 
 export async function encryptMessage(msg, convoId) {
+  if (!msg || !msg.trim()) return null;
+
   const key = await getKeyFromConvoId(convoId);
   const iv = crypto.getRandomValues(new Uint8Array(16));
 
@@ -44,6 +46,9 @@ export async function encryptMessage(msg, convoId) {
 }
 
 export async function decryptMessage(encryptedStr, convoId) {
+  if (!encryptedStr || !encryptedStr.trim()) return null;
+  if(encryptedStr==="Message Deleted") return "Message Deleted";
+  
   // console.log("encryptedStr", encryptedStr);
   const [ivB64, contentB64] = encryptedStr.split(":");
   if (!ivB64 || !contentB64) throw new Error("Invalid encrypted format");

@@ -14,7 +14,7 @@ const messageSchema = new mongoose.Schema({
     text: {
         type: String,
         trim: true,
-        default: ''
+        default: null
     },
     media: {
         type: {
@@ -23,6 +23,14 @@ const messageSchema = new mongoose.Schema({
             required: false
         },
         url: {
+            type: String,
+            required: function () { return this.media?.type; }
+        },
+        publicId: {
+            type: String,
+            required: function () { return this.media?.type; }
+        },
+        filename:{
             type: String,
             required: function () { return this.media?.type; }
         }

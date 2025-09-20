@@ -1,4 +1,5 @@
 const messageModel = require("../../model/messageModel")
+const cloudinary = require('cloudinary').v2
 
 async function deleteMessageController(req, res){
     try {
@@ -9,11 +10,23 @@ async function deleteMessageController(req, res){
         const io = req.app.get("io");
 
         const message = await messageModel.findById(msgId)
-
         if(!message) throw new Error("Message not found or not exists")
+
+        if(message.media && message.media.publicId){
+            console.log("Trying to delete:", message.media.publicId, message.media.type);
+            try {
+                await cloudinary.uploader.destroy(message.media.publicId, {
+                    resource_type:  message.media.type === "image" ? "image" : ( message.media.type === "video" ? "video" : "raw"),
+                })
+                console.log("Deleted from cloudinary")
+            } catch (error) {
+                console.error("Cloudinary delete error: ", error)
+            }
+        }
 
         message.text = "Message Deleted"
         message.isRemoved = true
+        message.media=null
         await message.save()
 
         // Emit socket event to all clients

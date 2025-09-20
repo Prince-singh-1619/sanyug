@@ -38,6 +38,10 @@ const convoSlice = createSlice({
             state.activeParticipants = allOtherParticipants
             // console.log("allOtherParticipants", allOtherParticipants)
         },
+        addNewConvo: (state, action)=>{
+            const { newConvo } = action.payload;
+            state.convoList.unshift(newConvo)
+        },
         convoTypingUser: (state, action)=>{
             const { sender, convoId, isTyping} = action.payload;
             if(!state.convoUserTyping){ 
@@ -153,6 +157,7 @@ const convoSlice = createSlice({
 export const { 
     setActiveConvo,
     setConvos,
+    addNewConvo,
     convoTypingUser,
     setLastMessage,
     updateLastTempMsgId,

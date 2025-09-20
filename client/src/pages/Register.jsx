@@ -5,6 +5,7 @@ import {toast} from 'react-toastify'
 import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
 import GoogleLogin from "../components/GoogleLogin";
+import { connectSocket } from "../socket/socket";
 // import { Link, useNavigate } from 'react-router-dom'
 
 const Register = () => {
@@ -145,7 +146,12 @@ const Register = () => {
       if(data.success) {
         console.log("dataApi message from success: ", data.message)
         toast.success(data.message)
-        navigate("/login")
+        
+        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("userData", JSON.stringify(data.user));
+        connectSocket();
+        
+        navigate("/")
       }
       if(data.error) {
         console.log("dataApi message from error: ", data.message)
@@ -166,7 +172,7 @@ const Register = () => {
         <div className='absolute top-4 right-4'>
           <ThemeToggle />
         </div>
-        <div className='w-1/2 flex flex-col gap-4'>
+        <div className='w-[95%] min-md:w-1/2 flex flex-col gap-4'>
           <p className='text-8xl max-sm:text-5xl font-bold text-center tracking-widest'>Sanyug</p>
           <p className='text-5xl max-sm:text-3xl font-bold text-center opacity-75'>Create an account</p>
           
@@ -183,7 +189,7 @@ const Register = () => {
                     {sendingOtp ? ( <div className="loader mx-auto"></div>
                     ) : (
                       <button onClick={handleSendOtp}
-                        className={`w-full text-center ${timer > 0 ? 'btn-disabled opacity-50 cursor-not-allowed' : 'btn-blue'}`}
+                        className={`w-full text-center text-nowrap ${timer > 0 ? 'btn-disabled opacity-50 cursor-not-allowed' : 'btn-blue'}`}
                         disabled={timer > 0}
                       >
                         {timer > 0 ? `Wait ${timer}s` : 'Send OTP'}
@@ -200,7 +206,7 @@ const Register = () => {
               <div className="flex gap-2 my-auto">
                 <input placeholder="Enter OTP" type="number" name="otp" required className="input-field" value={form.otp} onChange={handleOnChange} disabled={otpVerified}/>
                 { !otpVerified ? ( 
-                  <button onClick={handleVerifyOtp} className="btn-green w-34" disabled={verifyingOtp}> {verifyingOtp ? "Verifying" : "Verify OTP"} </button> 
+                  <button onClick={handleVerifyOtp} className="btn-green w-34 text-nowrap" disabled={verifyingOtp}> {verifyingOtp ? "Verifying" : "Verify OTP"} </button> 
                   ) : (
                     <span className="w-36 flex items-center justify-center gap-1 bg-slate-200 dark:bg-slate-700 text-green-600 font-medium rounded-lg px-2 py-1">
                       <FaRegCheckCircle /> Verified

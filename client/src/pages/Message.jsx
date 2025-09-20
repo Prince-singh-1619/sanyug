@@ -3,7 +3,7 @@ import dummyDp from '../assets/person-dummy.svg'
 import { SlOptionsVertical } from "react-icons/sl";
 import { LuTextSearch } from "react-icons/lu";
 import { TbCloudUpload } from "react-icons/tb";
-import { IoSend } from "react-icons/io5";
+import { IoAttach, IoSend } from "react-icons/io5";
 import { BsEmojiSmile } from "react-icons/bs";
 import { MdAttachFile, MdDelete } from "react-icons/md";
 import SummaryApi from '../helpers/SummaryApi';
@@ -16,14 +16,16 @@ import calendar from "dayjs/plugin/calendar";
 import ChatDropdown from '../components/ChatDropdown';
 dayjs.extend(calendar);
 import { useDispatch, useSelector } from "react-redux";
-import { addMessage, setMessages, updateTempMsgId } from "../redux/slices/chatSlice";
+import { addMessage, setActiveChat, setMessages, updateTempMsgId } from "../redux/slices/chatSlice";
 import DeleteConfirm from '../popups/DeleteConfirm';
 import MsgIndicator from '../components/MsgIndicator';
 import { toast } from 'react-hot-toast';
-import { setLastMessage, updateLastTempMsgId } from '../redux/slices/convoSlice';
+import { setActiveConvo, setLastMessage, updateLastTempMsgId } from '../redux/slices/convoSlice';
 import EmojiPicker from "emoji-picker-react"
 import { motion, AnimatePresence } from "framer-motion";
 import { encryptMessage, decryptMessage } from '../helpers/cryption'
+import { IoMdArrowBack, IoMdClose } from 'react-icons/io';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Message = () => {
   
@@ -32,6 +34,7 @@ const Message = () => {
   const [chatDropdown, setChatDropdown] = useState(false)
   // const [deleteBox, setDeleteBox] = useState(false)
   const [deleteMsgId, setDeleteMsgId] = useState(null);
+  // const [deleteMediaId, setDeleteMediaId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false)
   // const [showUnreadDivider, setShowUnreadDivider] = useState(false)
   const [firstUnreadId, setFirstUnreadId] = useState(null)
@@ -39,7 +42,10 @@ const Message = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [chatTheme, setChatTheme] = useState(localStorage.getItem("theme"))
   const pickerRef = useRef(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
+  const navigate = useNavigate()
   const dispatch = useDispatch()
   const {activeChat, messageList, activeConvoId_otherSide} = useSelector((state)=>state.chat)
   const { activeConvoId, convoList, convoUserTyping } = useSelector(state => state.convo);
@@ -64,6 +70,25 @@ const Message = () => {
     }
   };
 
+  const handleFileUpload = async(media) =>{
+    if(!media) return
+
+    const formData = new FormData()
+    formData.append("file", selectedFile)
+
+    const res = await fetch(SummaryApi.sendMedia.url, {
+      method:SummaryApi.sendMedia.method,
+      headers: {
+        Authorization: `Bearer ${authToken}`
+      },
+      body: formData
+    })
+
+    const resData = await res.json();
+    console.log("File uploaded", resData)
+    return resData
+  }
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -77,43 +102,55 @@ const Message = () => {
     // console.log("newMessage: ", newMessage)
     
     const tempId = Date.now().toString();
-    dispatch(addMessage({
-      // convoId,
-      message: {
-        conversationId: convoId,
-        _id: tempId,              // temporary id
-        text: message,         // the message text
-        sender: userId,           // current user
-        isTemp: true,   
-        // give a totalReceiver here, to properly show msg status
-        deliveredTo: [],
-        readBy: [],          // mark as not confirmed yet
-        createdAt: new Date().toISOString()
-      }
-    }));
-
-    // update convoList 
-    dispatch(setLastMessage({
-      // convoId, 
-      msg:{
-        conversationId: convoId,
-        _id: tempId,
-        text:message, 
-        sender:userId, 
-        deliveredTo: [],
-        readBy: [],
-        createdAt:new Date().toISOString()
+    const baseMsg = {
+      conversationId: convoId,
+      _id: tempId,              // temporary id
+      text: message.trim() ? message : null,         // the message text
+      media: selectedFile ? {
+            type: selectedFile.type.startsWith("image") ? "image" : "file",
+            url: URL.createObjectURL(selectedFile),  // temp preview before upload
+            publicId: null, // update after uploading
+            originalName: selectedFile.name,
+        } : null, 
+      sender: userId,           // current user
+      isTemp: true,   
+      // give a totalReceiver here, to properly show msg status
+      deliveredTo: [],
+      readBy: [],          // mark as not confirmed yet
+      createdAt: new Date().toISOString()
+    }
+    dispatch(addMessage({ message: baseMsg }));
+    dispatch(setLastMessage({ msg:{ 
+        ...baseMsg, 
+        text: baseMsg.text || "File attached"
       }
     }))
+
+    const media = selectedFile;
+    setMessage('');
+    setSelectedFile(null);
     
     const encrypted = await encryptMessage(message, convoId)
-
     console.log("encrypted:", encrypted)
+    
+    let mediaPayload = null;
+    if(selectedFile){
+      const uploadMedia = await handleFileUpload(media);
+      if(uploadMedia?.url){
+        mediaPayload = { 
+          type:selectedFile.type.startsWith("image") ? "image" : "file", 
+          url:uploadMedia.url, 
+          publicId: uploadMedia.publicId,
+          filename:uploadMedia.originalName 
+        }
+      }
+    }
+
     const payload = {
       convoId,
       sender: userId,
-      text: encrypted,
-      media: selectedFile ? { type: "image", url: selectedFile } : null,
+      text: message.trim() ? encrypted : null,
+      media: mediaPayload,
       // totalReceivers: activeChat?.isGroup ? (activeChat?.members?.length -1) : 1,
       // deliveredTo: [],
       // readBy: [],
@@ -121,8 +158,7 @@ const Message = () => {
       // createdAt: new Date().toISOString()
     }
 
-    setMessage('');
-    setSelectedFile(null);
+ 
 
     // using react hot toast here
     const res = await toast.promise( fetch(SummaryApi.sendMessage.url, {
@@ -146,9 +182,11 @@ const Message = () => {
 
     const resData = await res.json();
     if(resData.success){
+      // const audio = new Audio("/sounds/send-message.mp3");
+      // audio.play().catch((err) => console.log("Audio play error:", err));
       // toast.success(resData.message)
       // Emit live events to other clients
-      dispatch(updateTempMsgId({ convoId, tempId, newId:resData.data._id }));
+      dispatch(updateTempMsgId({ convoId, tempId, newId:resData.data._id, newPublicId:resData.data?.media?.publicId }));
       dispatch(updateLastTempMsgId({ convoId, tempId, newId:resData.data._id }))
     }
     else{
@@ -312,14 +350,33 @@ const Message = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showEmojiPicker]);
 
+  const handleBackNav = () =>{
+    dispatch(setActiveChat({ chat: null }))
+    dispatch(setActiveConvo({ newConvoId: null, participants: [] }) )
+    navigate('/conversations')
+  }
+
+  // filter convos to filterConvo and render
+  const filteredMessages = (messageList?.[convoId] || []).filter(msg => {
+    if (!search?.trim()) return true; // if search is empty, show all
+
+    const textMatch = msg?.text?.toLowerCase().includes(search.toLowerCase());
+    const fileMatch = msg?.media?.filename?.toLowerCase().includes(search.toLowerCase());
+    const localFileMatch = msg?.media?.originalName?.toLowerCase().includes(search.toLowerCase());
+
+    return textMatch || fileMatch || localFileMatch;
+  });
+
 // console.log("final",messageList[convoId])
+console.log("selectedFile", selectedFile)
 
 
   return (
     <section className='w-full h-[99vh] max-h-screen flex flex-col  rounded-lg border border-slate-400 shadow-sm'>
       {/* Header */}
-      <header className='h-16 w-full px-4 py-3 flex justify-between items-center bg-gray-300 dark:bg-gray-600 border-b border-gray-200 dark:border-gray-700 rounded-t-lg'>
+      <header className='h-16 w-full px-2 py-3 flex justify-between items-center bg-gray-300 dark:bg-gray-600 border-b border-gray-200 dark:border-gray-700 rounded-t-lg'>
         <button className='flex items-center gap-3 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors'>
+          <Link onClick={handleBackNav} className='hidden max-md:block p-2'> <IoMdArrowBack/> </Link> 
           <img src={activeChat?.profilePic || dummyDp} alt='Profile' className='w-10 h-10 object-cover rounded-lg border-2 border-gray-200 dark:border-gray-800' />
           <div className='flex flex-col items-start'>
             <p className='font-semibold text-gray-900 dark:text-white text-lg capitalize'>{activeChat?.name}</p>
@@ -334,17 +391,19 @@ const Message = () => {
             </span>
           </div>
         </button>
-        <div className='flex items-center gap-2'>
-          <button onClick={handleGetMessages} className='p-3 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors'>
+
+        <div className='relative flex items-center gap-2'>
+          <button onClick={handleGetMessages} className='max-[425px]:hidden p-3 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors'>
             <HiRefresh className='text-lg' />
           </button>
-          <button className='p-3 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors'>
+          <button onClick={()=>setIsSearchOpen(prev=>!prev)} className='max-[425px]:hidden p-3 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors'>
             <LuTextSearch className='text-lg' />
           </button>
+          {isSearchOpen && <input type='text' placeholder='Search in messages' value={search} onChange={(e)=>setSearch(e.target.value)} className='absolute z-50 top-10 right-0 w-78 h-12 px-2 bg-slate-300 dark:bg-[#151515] rounded-lg'/>}
           <button onClick={()=>setChatDropdown((prev)=>!prev)} className='p-3 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors'>
             <SlOptionsVertical className='text-lg' />
           </button>
-          <div className='absolute z-50'>{chatDropdown && (<ChatDropdown/>)}</div>
+          <div className='absolute z-50 right-4 top-16 '>{chatDropdown && (<ChatDropdown/>)}</div>
           
         </div>
       </header>
@@ -365,8 +424,8 @@ const Message = () => {
         }
 
         <div className="w-full h-full flex flex-col mt-2 mb-4">
-          <span className='text-yellow-800 dark:text-yellow-300 w-fit mx-auto bg-slate-300 dark:bg-black/25 px-4 py-1 rounded-lg border'>Your messages on Sanyug are end to end encrypted</span>
-          {Object.entries(groupMessagesByDate(messageList[convoId] || [])).map(([date, msgs]) => (
+          <span className='text-yellow-800 dark:text-yellow-300 w-fit mx-auto text-center bg-slate-300 dark:bg-[#151515] px-4 py-1 rounded-lg border'>Your messages on Sanyug are end to end encrypted</span>
+          {Object.entries(groupMessagesByDate(filteredMessages || [])).map(([date, msgs]) => (
             <div key={date}>
               {/* Date Divider */}
               <div className="flex justify-center my-3">
@@ -382,26 +441,65 @@ const Message = () => {
                   
               {/* Messages */}
               {msgs.map((data, index) =>{ 
-                // const isFirstUnread = !data.readBy.includes(userId) && data.sender!==userId && (index==0 || msgs[index-1].readBy.includes(userId))
                 const isFirstUnread = data._id===firstUnreadId
-                // return (<div key={msg._id}>{isFirstUnread && <span>{UnreadMessages.length} new Messages</span>}</div>)
-                return(
+               return(
                 <div key={data._id || index} className={`group mb-2 px-2 ${data.sender===userId ? "place-items-end" : "place-items-start" }`}>
                   {/* Unread divider */}
-                  {isFirstUnread && unreadNumber>0 && (<div className="w-1/2 flex justify-center items-center mx-auto text-nowrap my-2 bg-gray-800"> <span className="px-4 py-1 rounded-full  text-white text-sm">{unreadNumber} Unread Messages</span> </div>)}                  
-                  {/* {showUnreadDivider && (<div className="w-1/2 flex justify-center items-center mx-auto text-nowrap my-2 bg-gray-800"> <span className="px-4 py-1 rounded-full  text-white text-sm">{unreadMessages.length} Unread Messages </span> </div>)} */}
+                  {isFirstUnread && unreadNumber>0 && (
+                    <div className="w-1/2 flex justify-center items-center mx-auto text-nowrap my-2 bg-gray-800"> 
+                      <span className="px-4 py-1 rounded-full  text-white text-sm">{unreadNumber} Unread Messages</span> 
+                    </div>
+                  )}                  
 
-                  <div className={` relative flex w-fit max-w-[80%] h-fit text-lg font-medium border py-1 px-2 rounded-md ${data.sender===userId ? "rounded-br-none bg-green-400 dark:bg-green-700" : "rounded-bl-none bg-slate-300 dark:bg-black/25"}  `}>
-                    <p className={`${data.isRemoved ? 'italic text-red-800 dark:text-red-600 opacity-75':''}`}>{data.text} </p>
-                    <span className="text-xs opacity-85 min-w-16 max-h-6 flex justify-center items-center mt-auto place-items-end-safe">{formatChatTimestamp(data.createdAt)}</span> 
-                    {data.sender === userId && !data.isRemoved && 
-                      <span className='text-sm opacity-85 mt-auto place-items-end-safe'> <MsgIndicator message={data} /> </span> 
-                    }
+                  <div className={` relative flex flex-col w-fit max-w-[80%] h-fit text-lg font-medium border  rounded-md ${data.sender===userId ? "rounded-br-none bg-green-400 dark:bg-green-700" : "rounded-bl-none bg-slate-300 dark:bg-black/25"}  `}>
+                    
+                    {data.media && (
+                      <section className='lazy-loading px-2'>
+                        {data.media.type === "image" && (
+                          <img  src={data.media.url}  alt="attachment"  className="w-36 h-36 object-cover rounded-lg max-w-xs cursor-pointer"/>
+                        )}
+
+                        {data.media.type === "video" && (
+                          <video controls className="rounded-lg max-w-xs">
+                            <source src={data.media.url} type="video/mp4" />
+                            Your browser does not support video playback.
+                          </video>
+                        )}
+
+                        {data.media.type === "audio" && (
+                          <audio controls>
+                            <source src={data.media.url} type="audio/mpeg" />
+                            Your browser does not support audio playback.
+                          </audio>
+                        )}
+
+                        {data.media.type === "file" && (
+                          <a 
+                            href={data.media.url} 
+                            download={data.media.filename}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline flex items-center gap-1"
+                          >
+                            <IoAttach/> {data?.media?.filename || data?.media?.originalName || "Download File"}
+                          </a>
+                        )}
+                      </section>
+                    )}
+                    <div className='flex ml-auto py-1 px-2'>
+                      {data.text && <p className={`${data.isRemoved ? 'italic text-red-800 dark:text-red-600 opacity-75':''}`}>{data.text} </p> }
+                      <span className="text-xs opacity-85 min-w-16 max-h-6 flex justify-center items-center mt-auto place-items-end-safe">{formatChatTimestamp(data.createdAt)}</span> 
+                      {data.sender === userId && !data.isRemoved && 
+                        <span className='text-sm opacity-85 mt-auto place-items-end-safe'> <MsgIndicator message={data} /> </span> 
+                      }
+                    </div>
+                    
+                    {/* <span className="text-xs opacity-85 min-w-16 max-h-6 flex justify-center items-center mt-auto"> {formatChatTimestamp(data.createdAt)} </span> */}
                     {data.sender === userId && (
                       <i onClick={()=>!data.isTemp && setDeleteMsgId(data._id)} 
                         className={`absolute top-1/2 -left-10 transform -translate-y-1/2 hidden 
-                        ${data.isTemp ? 'cursor-not-allowed' : 'cursor-pointer'} 
-                        ${data.isRemoved ? 'hidden':'group-hover:flex'} h-8 w-8 text-2xl bg-red-500 hover:bg-red-600 text-slate-100 rounded-full justify-center items-center`}> 
+                          ${data.isTemp ? 'cursor-not-allowed' : 'cursor-pointer'} 
+                          ${data.isRemoved ? 'hidden':'group-hover:flex'} h-8 w-8 text-2xl bg-red-500 hover:bg-red-600 text-slate-100 rounded-full justify-center items-center`}> 
                         {isDeleting && deleteMsgId===data._id ? (
                           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                         ) : (
@@ -427,26 +525,16 @@ const Message = () => {
       </div>
 
       {/* Footer - Message Input */}
-      <footer className='relative h-20 w-full p-4 bg-gray-300 dark:bg-gray-600 border-t border-gray-200 dark:border-gray-700 rounded-b-lg'>
-        <div className='flex items-center gap-3'>
+      <footer className='relative h-20 w-full p-4 max-[425px]:px-2 bg-gray-300 dark:bg-gray-600 border-t border-gray-200 dark:border-gray-700 rounded-b-lg'>
+        <div className='flex items-center gap-3 max-[425px]:gap-2'>
           {/* File Upload */}
           <div className='flex items-center gap-2'>
-            <input 
-              id='addFiles' 
-              type='file' 
-              className='hidden'
-              onChange={handleFileChange}
-              accept="image/*,.pdf,.doc,.docx,.txt"
-            />
-            <label 
-              htmlFor='addFiles' 
-              className='p-2 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg cursor-pointer transition-colors'
-              title="Attach file"
-            >
+            <input id='addFiles' type='file' className='hidden' onChange={handleFileChange} accept="image/*,.pdf,.doc,.docx,.txt"/>
+            <label htmlFor='addFiles' className='p-2 max-[375px]:p-1 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg cursor-pointer transition-colors' title="Attach file" >
               <TbCloudUpload className='text-xl' />
             </label>
 
-            <button onClick={()=>setShowEmojiPicker(!showEmojiPicker)} className='p-2 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors' title="Add emoji">
+            <button onClick={()=>setShowEmojiPicker(!showEmojiPicker)} className='p-2 max-[425px]:p-0 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors' title="Add emoji">
               <BsEmojiSmile className='text-xl' />
             </button>
             <AnimatePresence >
@@ -475,16 +563,21 @@ const Message = () => {
               rows="1"
               style={{ minHeight: '44px', maxHeight: '120px' }}
             />
-            {selectedFile && (
-              <div className='absolute -top-2 left-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full flex items-center gap-1'>
-                <span>{selectedFile.name}</span>
-                <button 
-                  onClick={() => setSelectedFile(null)}
-                  className='text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100'
-                >
-                  ×
-                </button>
-              </div>
+            {selectedFile && (selectedFile.type.startsWith("image/") ? (
+                <div className="">
+                  <img src={URL.createObjectURL(selectedFile)} alt="preview" className="absolute bottom-16 h-36 w-36 object-cover rounded-lg border" />
+                  <button onClick={()=>setSelectedFile(null)} className="absolute bottom-46 left-30  bg-black/50 text-white text-sm rounded-full w-5 h-5 flex items-center justify-center hover:bg-black" >
+                    <IoMdClose/>
+                  </button>
+                </div>
+              ) : (
+                <div className="absolute bottom-12 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs p-2 rounded-lg flex items-center gap-1">
+                  <span className="truncate max-w-[150px]">{selectedFile.name}</span>
+                  <button onClick={() => setSelectedFile(null)} className="text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100" >
+                    <IoMdClose/>
+                  </button>
+                </div>
+              )
             )}
           </div>
 

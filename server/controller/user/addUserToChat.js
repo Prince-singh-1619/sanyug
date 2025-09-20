@@ -14,20 +14,25 @@ async function addUserToChatController(req, res){
             participants: { $all: participants, $size: 2 }
         }).populate('participants', '-password');
         if(conversation){
-            res.status(200).json({message:"User already exists", success: true})
+            res.status(200).json({message:"Chat already exists", success: true})
         }
 
         if (!conversation) {
         // Create new conversation
-        conversation = await conversationModel.create({
-            participants,
-            isGroup: false
-        });
+            conversation = await conversationModel.create({
+                participants,
+                isGroup: false
+            });
 
-        conversation = await conversation.populate('participants', '-password');
+            conversation = await conversation.populate('participants', '-password');
         }
 
-        res.status(200).json(conversation);
+        res.status(200).json({
+            message: "New chat created",
+            data: conversation,
+            success: true,
+            error: false
+        });
     } catch (err) {
         // console.error(err);
         res.status(500).json({ 

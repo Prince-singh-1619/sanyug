@@ -14,15 +14,20 @@ import Sidebar from '../components/Sidebar'
 import { AiOutlineSelect } from "react-icons/ai";
 // import ResizableDiv from '../helpers/ResizableDiv'
 // import { connectSocket } from '../socket/socket'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate, useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { setActiveChat } from '../redux/slices/chatSlice'
 import { resetUnreadCount, setActiveConvo, setConvos } from '../redux/slices/convoSlice'
 import MsgIndicator from '../components/MsgIndicator'
 import { BiUser } from 'react-icons/bi'
-import { MdPersonAdd } from 'react-icons/md'
+import { MdPersonAdd, MdPersonAddAlt1 } from 'react-icons/md'
 import useResizable from '../hooks/useResizable'
 import { decryptMessage } from '../helpers/cryption'
+import { SlOptionsVertical } from 'react-icons/sl'
+import { HiOutlineDocumentSearch } from 'react-icons/hi'
+import ConvoDropdown from '../components/ConvoDropdown'
+import UserSearchPopup from '../popups/UserSearchPopup'
+import useIsMobile from '../hooks/useIsMobile'
 // import { Socket } from 'socket.io-client'
 // import { connectSocket } from '../socket/socket'
 
@@ -33,7 +38,7 @@ const Conversations = () => {
     const userId = userData?.userId
 
     const { width, handleMouseDown } = useResizable(25, 20, 45);
-    // const [convoList, setConvoList] = useState([])
+    // const [unformattedList, setUnformattedList] = useState([])
     // const [activeChat, setActiveChat] = useState([])
     // const [activeChatIdx, setActiveChatIdx] = useState(-1)
     // const [activeConvoId, setActiveConvoId] = useState(0)
@@ -45,6 +50,9 @@ const Conversations = () => {
     const [loading, setLoading] = useState(false)
     const loadingArray = new Array(5).fill(null)
     const [isAdding, setIsAdding] = useState(false)
+    const [convoDropdown, setConvoDropdown] = useState(false)
+    const [isAddPopupOpen, setIsAddPopupOpen] = useState(false)
+    const [search, setSearch] = useState("");
 
     // const {  } = useSelector((state)=>state.convo)
     
@@ -133,7 +141,9 @@ const Conversations = () => {
                         convoId: convo._id,
                         name: convo.groupName,
                         profilePic: convo?.groupImage,
-                        lastMsg: convo.lastMessage,
+                        lastMsg: convo?.lastMessage,
+                        // hasMedia: convo?.media?.filename ? true:false,
+                        // lastMsg: convo?.lastMessage===''||!convo.lastMessage ? 'Files attached' : convo.lastMessage,
                         // lastMsg: decryptMessage(convo.lastMessage, convo._id),
                         sender: convo.lastMessage?.sender,
                         participants: convo.participants,
@@ -148,6 +158,8 @@ const Conversations = () => {
                         name: `${otherUser.firstName} ${otherUser.lastName}`,
                         profilePic: otherUser?.profilePic ,
                         lastMsg: convo?.lastMessage,
+                        // hasMedia: convo?.media?.filename ? true:false,
+                        // lastMsg: !convo?.lastMessage.text ? "File attached" : convo.lastMessage,
                         // lastMsgId: convo.lastMessage.msgId,
                         // lastMessage: convo.lastMessage?.text || '',
                         sender: convo?.lastMessage?.sender,
@@ -237,18 +249,49 @@ const Conversations = () => {
         }
     }
 
+    const handleOpenPopup = () => { setIsAddPopupOpen(true) }
+    const handleClosePopup = () => { setIsAddPopupOpen(false) }
+
+    // const { convoId } = useParams();
+    const isMobile = useIsMobile();
+
+    if (isMobile && activeConvoId) {
+        // Mobile: only show list or message
+        // if (convoId) {
+            return (
+                // <div className="h-full w-full">
+                <Outlet /> 
+                // </div>
+            );
+        // }
+    }
+
+    // filter convos to filterConvo and render
+    const filteredConvos = convoList.filter(convo=> 
+        convo.name.toLowerCase().includes(search.toLowerCase())
+    );
 
   return (
-    <section className='w-100vw max-h-screen overflow-hidden flex'>
-      <section>
+    <section className='w-100vw max-h-screen overflow-hidden flex '>
+      <section className='max-[425px]:hidden'>
         <Sidebar/>
       </section>
 
-      <section style={{ width: `${width}%` }} className='h-[99vh] ml-2 mr-1 w-1/4 min-w-1/5 max-w-1/2 overflow-y-scroll scrollbar-hide border border-slate-400 rounded-lg transition-all'>
-        <div className='w-full border-b border-slate-400 py-4 flex' >
-            <input className='w-9/10 h-10 rounded-full border border-slate-500 mx-auto px-2' placeholder='Search here'/>
+      <section style={{ width: `${width}%`}} className="h-[99vh] ml-2 mr-1 min-w-1/5 border border-slate-400 rounded-lg transition-all md:max-w-1/2">
+        <div className='w-full mx-auto border-b border-slate-400 py-4 px-2 flex gap-2 justify-center' >
+            <div className="w-[95%] h-10 rounded-lg border border-slate-500 flex items-center px-3 gap-2 bg-slate-300/50 dark:bg-[#1a1a1a]">
+                <HiOutlineDocumentSearch className="text-xl text-gray-800 dark:text-gray-300" />
+                <input type="text" placeholder="Search here" value={search} onChange={(e)=>setSearch(e.target.value)} className="flex-1 outline-none text-sm bg-transparent placeholder-gray-800 dark:placeholder-gray-400 " />
+            </div>
+            {/* <span className='text-2xl tracking-widest font-bold'>Sanyug</span> */}
+            <button onClick={()=>setConvoDropdown((prev)=>!prev)} className='max-[425px]:block hidden px-2 bg-transparent rounded-lg transition-colors'>
+                <SlOptionsVertical className='text-lg' />
+            </button>
+            <div className='absolute z-50 right-4 top-19'>{convoDropdown && <ConvoDropdown/>}</div>
+            
         </div>
-        <div className=' flex flex-col justify-center'>
+
+        <div className='flex flex-col justify-center overflow-y-scroll scrollbar-hide'>
             {loading ? (
                 loadingArray.map((el,index)=>{ return(
                     <div key={el+index} className={`w-full h-18  my-auto border-b border-slate-400 odd:bg-slate-300 dark:odd:bg-slate-800`}>
@@ -265,21 +308,23 @@ const Conversations = () => {
                     </div>    
                 )})
             ) : (
-                convoList.map((data, index)=>{
+                // convoList.map((data, index)=>{
+                filteredConvos.length > 0 ? 
+                filteredConvos.map((data, index)=>{
                     return(
                         <button key={index} onClick={()=>displayMessage(index)} className={`h-18 my-auto cursor-pointer border-b border-slate-400 hover:bg-gray-300 dark:hover:bg-gray-500/75 ${activeConvoId===data.convoId ? 'bg-gray-400/75 dark:bg-gray-600 text-black dark:text-white':''}`}>
                             <div className='w-full flex items-center justify-between px-2 '>
                                 <div className='w-full flex items-center gap-2 justify-center'>
-                                    <img src={data.profilePic ? data.profilePic : dummyDp} alt={data.name} className='w-12 h-12 rounded-lg object-cover'/>
+                                    <img src={data.profilePic ? data.profilePic : dummyDp} alt={data?.name} className='w-12 h-12 rounded-lg object-cover'/>
                                     <div className='w-full flex flex-col items-start'>
                                         <div className='w-full flex items-center justify-between'>
-                                            <p className='text-lg font-lg capitalize'>{data.name}</p>
-                                            <span className='opacity-90 font-sm text-xs'>{data.lastSeen}</span>
+                                            <p className='text-lg font-lg capitalize'>{data?.name}</p>
+                                            <span className='opacity-90 font-sm text-xs'>{data?.lastSeen}</span>
                                         </div>
                                         <div className='w-full flex items-center justify-between'>
                                             <div className='opacity-75 text-sm flex gap-2 items-center'>
                                                 { (data?.lastMsg?.sender===userId && data.lastMsg) && <i className='mt-[1px]'><MsgIndicator message={data.lastMsg}/></i> }
-                                                <span>{data?.lastMsg?.text}</span>
+                                                <span className={`${data?.lastMsg?.media ? 'italic' : ''}`}>{data?.lastMsg?.media ? "File attached" : data?.lastMsg?.text}</span>
                                             </div>
                                             {data.unreadCount ? <span className='w-4 h-4 rounded-full bg-green-500 text-xs text-white dark:text-black flex justify-center items-center'>{data.unreadCount}</span> : '' }
                                         </div> 
@@ -288,12 +333,14 @@ const Conversations = () => {
                             </div>
                         </button>        
                     )
-                })
+                }) : (
+                    <p className="">No conversations found</p>
+                )
             )}
 
             {/* for new user */}
             { error ? "Error loading Chats" : (
-                !loading && convoList.length===0 && !error && 
+                !loading && convoList.length===0 && 
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600 flex flex-col gap-4">
                     <span className='text-yellow-400 mx-auto'>Don't have anyone yet, try chatting with the Admin</span>
                     <div className="flex items-center gap-4">
@@ -322,16 +369,16 @@ const Conversations = () => {
       </section>
 
       {/* width handle */}
-      <section onMouseDown={handleMouseDown} className='h-[99vh] -ml-[2px] mr-[2px] cursor-ew-resize hover:bg-blue-500 flex items-center'>
+      <section onMouseDown={handleMouseDown} className='max-md:hidden h-[99vh] -ml-[2px] mr-[2px] cursor-ew-resize hover:bg-blue-500 flex items-center'>
         <div className="h-10 my-auto rounded-lg flex flex-col justify-around items-center">
-            <span className="w-1 h-1 rounded-lg bg-black dark:bg-white"></span>
-            <span className="w-1 h-1 rounded-lg bg-black dark:bg-white"></span>
-            <span className="w-1 h-1 rounded-lg bg-black dark:bg-white"></span>
+            <span className="w-1 h-1 rounded-lg bg-black/75 dark:bg-white/75"></span>
+            <span className="w-1 h-1 rounded-lg bg-black/75 dark:bg-white/75"></span>
+            <span className="w-1 h-1 rounded-lg bg-black/75 dark:bg-white/75"></span>
         </div>
       </section>
 
       {/* message area */}
-      <section className='w-full flex-1'>
+      <section className='w-full max-md:hidden flex-1'>
         {activeConvoId ? (
             <Outlet/>
         )  :(
@@ -348,6 +395,13 @@ const Conversations = () => {
             </div>
         )}
       </section>
+
+
+        {/* user search on phone screen */}
+        <div onClick={handleOpenPopup} title='Add to Chat' className="absolute  bottom-12 right-12 hidden max-[425px]:flex flex-col justify-center items-center w-15 h-15 rounded-lg text-2xl bg-green-400 dark:text-black hover:bg-green-500 transition-colors duration-200 cursor-pointer" >
+            <i className='text-3xl'> <MdPersonAddAlt1 /> </i>
+        </div>
+        {isAddPopupOpen && <UserSearchPopup isOpen={isAddPopupOpen} onClose={handleClosePopup} />}
     </section>
   )
 }

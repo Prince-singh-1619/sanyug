@@ -119,3 +119,9 @@
 .dark .combine-bg-2{
   background-color: #1f2937;
 }
+
+
+.mobile-chat-screen { width: auto; }
+@media (max-width: 767px) {
+  .mobile-chat-screen { width: var(--mobile-width); }
+}

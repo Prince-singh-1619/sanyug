@@ -17,20 +17,20 @@ const GoogleLogin = () => {
 
     useEffect(() => {
         // Function to check if Google SDK is loaded
-        console.log("useEffect 0")
+        // console.log("useEffect 0")
         const checkGoogleSDK = () => {
-            console.log("useEffect 1")
+            // console.log("useEffect 1")
             if (window.google && window.google.accounts && window.google.accounts.id) {
-                console.log("useEffect 2")
+                // console.log("useEffect 2")
                 setIsGoogleSDKReady(true);
                 initializeGoogleAuth();
             } else {
                 // Retry after a short delay
                 setTimeout(checkGoogleSDK, 100);
-                console.log("useEffect 3")
+                // console.log("useEffect 3")
             }
         };
-        console.log("useEffect 4")
+        // console.log("useEffect 4")
 
         // Start checking for Google SDK
         checkGoogleSDK();

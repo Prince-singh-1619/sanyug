@@ -37,6 +37,10 @@ const SummaryApi = {
         url:`${backendDomain}/api/store-message`,
         method: "POST"
     },
+    sendMedia:{
+        url:`${backendDomain}/api/store-media`,
+        method: "POST"
+    },
     fetchMessage:{
         url:`${backendDomain}/api/fetch-message`,
         method: "GET"

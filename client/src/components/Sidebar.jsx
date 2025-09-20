@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { IoMdMenu } from 'react-icons/io'
 import { MdOutlineMessage, MdOutlineSettings } from 'react-icons/md'
 import { TbProgress } from "react-icons/tb";
@@ -7,17 +7,16 @@ import { Link } from 'react-router-dom';
 import { MdPersonAddAlt1 } from 'react-icons/md'
 import UserSearchPopup from '../popups/UserSearchPopup';
 import ThemeToggle from './ThemeToggle';
-import { LuPanelRightClose } from "react-icons/lu";
+import { LuPanelLeftOpen, LuPanelRightClose } from "react-icons/lu";
 import { LuPanelLeftClose } from "react-icons/lu";
 import { AiOutlineClose } from "react-icons/ai";
+import { motion } from "framer-motion";
 
 const Sidebar = () => {
     const [isPanelOpen, setIsPanelOpen] = useState(false);
     const [isPopupOpen, setIsPopupOpen] = useState(false)
+    const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark")
 
-    // const toggleSidebar = () => {
-    //     setIsOpen(!isOpen);
-    // };
     const handleOpenPopup = () => {
         setIsPopupOpen(true)
     }
@@ -25,6 +24,20 @@ const Sidebar = () => {
         setIsPopupOpen(false)
     }
 
+    useEffect(()=>{
+        if(theme==="dark"){
+            document.documentElement.classList.add("dark")
+        }
+        else{
+            document.documentElement.classList.remove("dark")
+        }
+        localStorage.setItem("theme", theme)
+    }, [theme])
+    const handleTheme = () =>{
+        setTheme(theme==="dark" ? "light" : "dark")
+    }
+
+    
     const topArray = [
         {
             icon: <IoMdMenu />,
@@ -114,7 +127,7 @@ const Sidebar = () => {
                     />
 
                     {/* sliding panel */}
-                    <div className="relative w-64 bg-white dark:bg-[#213547] shadow-xl p-4 h-full animate-slide-in">
+                    <div className="relative w-64 bg-slate-300 dark:bg-[#131313] shadow-xl p-4 h-full animate-slide-in">
                         <button
                             onClick={() => setIsPanelOpen(false)}
                             className="absolute top-3 right-3 text-xl">
@@ -137,6 +150,10 @@ const Sidebar = () => {
                                 </Link> 
                             </div>
                             <div className="flex flex-col  gap-2">
+                                <div className="active-link-text flex items-center gap-3 hover:bg-[#E2E8F0] p-2 rounded">
+                                    <ThemeToggle /> 
+                                    <span onClick={handleTheme}>Theme</span>
+                                </div>
                                 <button onClick={handleOpenPopup} className='text-[#1a1a1a] flex items-center gap-3 p-2 rounded bg-green-400 hover:bg-green-500 transition-colors duration-200 cursor-pointer' > 
                                     <i><MdPersonAddAlt1/></i>
                                      <span>Add to Chat</span>

@@ -23,9 +23,15 @@ const ChatDropdown = () => {
           animate={{y:0}} 
           transition={{duration:0.3,}}
           style={{zIndex:0}}
-          className='absolute z-50 bg-slate-200 dark:bg-neutral-900 border rounded-lg ml-8 max-md:-ml-18 mt-8 flex flex-col items-center text-nowrap'>
-            <Link onClick={handleActiveChat} to={'/conversations'} className='w-full p-2 rounded-lg min-w-20 text-center hover:bg-slate-300 dark:hover:bg-neutral-800 transition-colors cursor-pointer'>Close chat</Link>
+          className=' z-50 bg-slate-300 dark:bg-[#151515] border rounded-lg flex flex-col items-center text-nowrap'>
+           
+            <button className='hidden max-[425px]:block w-full p-2 rounded-lg min-w-20 text-center hover:bg-slate-300 dark:hover:bg-neutral-800 transition-colors cursor-pointer'>Refresh</button>
             <div className="h-[1px] w-full bg-gray-300 dark:bg-gray-600"></div>
+
+            <button className='hidden max-[425px]:block w-full p-2 rounded-lg min-w-20 text-center hover:bg-slate-300 dark:hover:bg-neutral-800 transition-colors cursor-pointer'>Search</button>
+            <div className="h-[1px] w-full bg-gray-300 dark:bg-gray-600"></div>
+
+            <Link onClick={handleActiveChat} to={'/conversations'} className='w-full p-2 rounded-lg min-w-20 text-center hover:bg-slate-300 dark:hover:bg-neutral-800 transition-colors cursor-pointer'>Close chat</Link>
         </motion.div>
     </div>
   )

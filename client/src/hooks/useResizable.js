@@ -14,6 +14,7 @@ export default function useResizable(initialWidth = 25, min = 20, max = 50) {
   }, [width]);
 
   const handleMouseDown = () => {
+    if (window.innerWidth < 768) return;
     isDragging.current = true;
   };
 
@@ -34,11 +35,35 @@ export default function useResizable(initialWidth = 25, min = 20, max = 50) {
     isDragging.current = false;
   };
 
+  // useEffect(() => {
+  //   window.addEventListener("mousemove", handleMouseMove);
+  //   window.addEventListener("mouseup", handleMouseUp);
+
+  //   return () => {
+  //     window.removeEventListener("mousemove", handleMouseMove);
+  //     window.removeEventListener("mouseup", handleMouseUp);
+  //   };
+  // }, []);
+
+  // resize listener for mobile override
   useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setWidth(100); // force full width
+      } else {
+        // restore from saved value or fallback to initialWidth
+        const saved = localStorage.getItem("leftPanelWidth");
+        setWidth(saved ? parseFloat(saved) : initialWidth);
+      }
+    };
+
+    handleResize(); // run on mount
+    window.addEventListener("resize", handleResize);
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
 
     return () => {
+      window.removeEventListener("resize", handleResize);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };

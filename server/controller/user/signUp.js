@@ -42,12 +42,21 @@ async function signUpController(req, res){
         const tokenPayload = { userId: saveUser._id }
         const token = jwt.sign(tokenPayload, process.env.TOKEN_SECRET_KEY, {expiresIn: 60*60*24*7})
         
-        const { password: _, ...userWithoutPassword} = saveUser.toObject();
+        const { _id, password: _, ...userWithoutPassword} = saveUser.toObject();
 
         res.status(201).json({
             message: "User created successfully",
             token,
-            user: userWithoutPassword,
+            // user: userWithoutPassword,
+            // user: {
+            //     userId: userWithoutPassword._id,
+            //     firstName: userWithoutPassword.firstName,
+            //     lastName: userWithoutPassword.lastName,
+            //     username: userWithoutPassword.username,
+            //     email: userWithoutPassword.email,
+            //     profilePic: userWithoutPassword.profilePic,
+            // },
+            user: { userId: _id, ...userWithoutPassword._doc },
             success: true, 
             error: false,
         })

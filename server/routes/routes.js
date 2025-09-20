@@ -1,6 +1,9 @@
 const express = require('express')
 const router = express.Router()
 
+const multer = require('multer')
+const upload = multer({ dest: "temp/" })  //temporary storage
+
 const sendOtpController = require('../controller/otp/sendOtp')
 const verifyOtpController = require('../controller/otp/verifyOtp')
 const signUpController = require('../controller/user/signUp')
@@ -13,6 +16,7 @@ const fetchMessageController = require('../controller/message/fetchMessage')
 const deleteMessageController = require('../controller/message/deleteMessage')
 const authToken = require('../middleware/authToken')
 const googleAuthController = require('../controller/user/googleAuth')
+const storeMediaController = require('../controller/message/storeMedia')
 
 
 
@@ -29,6 +33,6 @@ router.get('/fetch-convo', authToken, fetchConvoController)
 router.post('/store-message', authToken, storeMessageController)
 router.get('/fetch-message', authToken, fetchMessageController)
 router.put('/remove-message', authToken, deleteMessageController)
-
+router.post('/store-media', authToken, upload.single("file"), storeMediaController)
 
 module.exports = router

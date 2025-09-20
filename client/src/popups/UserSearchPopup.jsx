@@ -3,6 +3,9 @@ import { IoClose } from 'react-icons/io5'
 import { MdSearch, MdPersonAdd } from 'react-icons/md'
 import { BiUser } from 'react-icons/bi'
 import SummaryApi from '../helpers/SummaryApi'
+import { useDispatch } from 'react-redux'
+import { addNewConvo } from '../redux/slices/convoSlice'
+import { connectSocket } from '../socket/socket'
 
 const UserSearchPopup = ({ isOpen, onClose }) => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -11,10 +14,13 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
   const [isAdding, setIsAdding] = useState(false)
   const [error, setError] = useState('')
   const popupRef = useRef(null)
+  const dispatch = useDispatch()
 
   const authToken = localStorage.getItem("authToken");
   const userData = JSON.parse(localStorage.getItem("userData"))
   const userId = userData?.userId
+
+  const socket = connectSocket()
 
   // Close popup when clicking outside
   useEffect(() => {
@@ -92,6 +98,30 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
     }
   }
 
+  const formatChatTimestamp = (dateString) =>{
+    if (!dateString) return "";
+
+    const date = new Date(dateString);
+    const now = new Date();
+
+    // Helper to zero out time for date comparison
+    const stripTime = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+    const today = stripTime(now);
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const messageDate = stripTime(date);
+
+    if (messageDate.getTime() === today.getTime()) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (messageDate.getTime() === yesterday.getTime()) {
+      return 'Yesterday';
+    } else {
+      // Older -> show date
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+  }
+
   const handleAddToChat = async() => {
     try {
       setIsAdding(true)
@@ -108,19 +138,56 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
         })
       })
 
-      const data = await res.json();
+      const resData = await res.json();
 
       if (!res.ok) {
-        console.error('Error creating/fetching conversation:', data.message);
+        console.error('Error creating/fetching conversation:', resData.message);
         return;
       }
+      if(resData.success){
+        // console.log("newConvo", resData)
+        const convo = resData.data;
 
-      console.log('Conversation created/fetched:', data);
+        let newConvo;
+        if (convo.isGroup) {
+          // Group chat
+          newConvo = {
+            convoId: convo._id,
+            name: convo.groupName,
+            profilePic: convo?.groupImage || "",
+            lastMsg: convo?.lastMessage || null,
+            sender: convo?.lastMessage?.sender || null,
+            participants: convo.participants,
+            createdAt: convo?.lastMessage?.createdAt ? formatChatTimestamp(convo.lastMessage.createdAt) : formatChatTimestamp(convo.createdAt),
+            unreadCount: convo?.unreadCount || 0,
+          };
+        } else {
+          // One-to-one chat
+          const otherUser = convo.participants.find((p) => p._id !== userId);
+          newConvo = {
+            convoId: convo._id,
+            name: `${otherUser.firstName} ${otherUser.lastName}`,
+            profilePic: otherUser?.profilePic || "",
+            lastMsg: convo?.lastMessage || null,
+            sender: convo?.lastMessage?.sender || null,
+            participants: convo.participants,
+            lastSeen: formatChatTimestamp(otherUser.lastSeen),
+            createdAt: convo?.lastMessage?.createdAt ? formatChatTimestamp(convo.lastMessage.createdAt) : formatChatTimestamp(convo.createdAt),
+            unreadCount: convo?.unreadCount || 0,
+          };
+        }
+        console.log("newConvo after formating..", newConvo)
+
+        dispatch(addNewConvo( { newConvo } ))
+        socket.emit("new-convo-added", ({newConvoForB:convo, userId}))
+      }
+
+      console.log('Conversation created/fetched:', resData);
       onClose()
-      window.location.reload()  // reloads the page
+      // window.location.reload()  // reloads the page
 
       // Optionally update your state to show new conversation instantly
-      // setConversations(prev => [...prev, data]);
+      // setConversations(prev => [...prev, resData]);
     } catch (error) {
       console.error("Error adding to chat: ", error)
     } finally{
@@ -169,7 +236,7 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
             <label className="block text-sm font-medium  mb-2">
               Search by Username
             </label>
-            <div className="relative">
+            <div className="relative flex gap-2">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <MdSearch className="h-5 w-5 text-gray-400" />
               </div>
@@ -179,8 +246,15 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Enter username..."
-                className="block w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-300 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                className="block w-8/10 pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-300 dark:bg-gray-700 dark:text-white transition-all duration-200"
               />
+              <button onClick={handleSearch} disabled={isLoading} className="min-w-12 max-w-24  bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2">
+                {isLoading ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  "Search"
+                )}
+              </button>
             </div>
             {/* Error Message */}
             {error && (
@@ -188,20 +262,7 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
                 <p className="text-red-500  text-md">{error}</p>
               // </div>
             )}
-            <button
-              onClick={handleSearch}
-              disabled={isLoading}
-              className="mt-3 w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                <>
-                  {/* <MdSearch className="w-5 h-5" /> */}
-                  Search
-                </>
-              )}
-            </button>
+            
           </div>
 
           

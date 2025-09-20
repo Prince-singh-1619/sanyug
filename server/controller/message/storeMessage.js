@@ -7,7 +7,8 @@ async function storeMessageController(req, res){
 
         if(!convoId) throw new Error("ConversationId is required")
         if(!sender) throw new Error("userId is required")
-        if(!text && !media) throw new Error("please enter a message")
+        if(!text && !media)throw new Error("please enter a message")
+        if(media && !text) text="File attached"
 
         const conversation = await conversationModel.findById(convoId).select("participants");
         if (!conversation) throw new Error("Conversation not found");

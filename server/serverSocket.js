@@ -78,6 +78,15 @@ function serverSocketHandler(io){
         socket.disconnect();
       }
     
+      // for receiving new convos
+      socket.on("new-convo-added", ({ newConvoForB, userId })=>{
+        const receivers = newConvoForB.participants.map(p => p._id).filter(id=> id!==userId)
+        console.log("receivers: ", receivers)
+        receivers.forEach(receiverId => {
+          io.to(receiverId.toString()).emit("new-convo-added-received", ({newConvoForB}) );
+        })
+      })
+
       // receiving acknowledge from receiver that they got the message
       socket.on("message-delivered", ({msgId, sender, receiver, activeConvoId})=>{
         console.log("message-delivered received at server", msgId, receiver, activeConvoId)

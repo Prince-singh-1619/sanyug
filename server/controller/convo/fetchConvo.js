@@ -21,7 +21,7 @@ async function fetchConvoController(req, res){
                 const msg = await messageModel
                     .findOne({conversationId: convo._id})
                     .sort({createdAt: -1})
-                    .select("text sender createdAt deliveredTo readBy")
+                    .select("text sender media.filename createdAt deliveredTo readBy")
                 .lean();
                 const unreadCount = await messageModel.countDocuments({
                     conversationId: convo._id,

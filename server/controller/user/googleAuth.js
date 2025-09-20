@@ -42,18 +42,20 @@ async function googleAuthController(req, res) {
         const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET_KEY, {
             expiresIn: '7d',
         });
+        
+        const { _id, password: _, __v, ...rest } = user;
 
         res.json({ 
             token, 
-            user: {
-                userId: user._id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                username: user.username,
-                email: user.email,
-                // userTag: user.userTag,
-                profilePic: user.profilePic,
-            },
+            // user: {
+            //     userId: user._id,
+            //     firstName: user.firstName,
+            //     lastName: user.lastName,
+            //     username: user.username,
+            //     email: user.email,
+            //     profilePic: user.profilePic,
+            // },
+            user: { userId: _id, ...rest._doc },
         });
     } catch (err) {
         console.error(err);

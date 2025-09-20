@@ -108,7 +108,8 @@ const ForgotPassword = () => {
     //   </form>
     // </div>
 
-    <div className="w-[50%] h-[80vh] flex flex-col gap-8 justify-center items-center mx-auto">
+    <div className="w-[65%] h-[80vh] flex flex-col gap-8 justify-center items-center mx-auto">
+      <p className='text-8xl max-sm:text-5xl font-bold text-center tracking-widest text-gray-900 dark:text-white'>Sanyug</p>
       <h2 className='text-5xl max-sm:text-3xl font-bold text-center'>Forgot Password</h2>
 
       {step === 1 && (
@@ -118,7 +119,7 @@ const ForgotPassword = () => {
             placeholder="Enter your registered email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className='mx-auto input-field min-w-78'
+            className='mx-auto input-field min-w-64'
             required
           />
           <button type="submit" className='btn btn-bg btn-plus mt-4'>
@@ -134,7 +135,7 @@ const ForgotPassword = () => {
             placeholder="Enter OTP"
             value={otp}
             onChange={(e) => setOtp(e.target.value)}
-            className='mx-auto input-field min-w-78'
+            className='mx-auto input-field min-w-64'
             required
           />
           <input
@@ -142,7 +143,7 @@ const ForgotPassword = () => {
             placeholder="Enter new password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            className='mx-auto input-field min-w-78'
+            className='mx-auto input-field min-w-64'
             required
           />
           <button type="submit" className='btn btn-bg btn-plus mt-2'>
