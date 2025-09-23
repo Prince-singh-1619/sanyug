@@ -6,6 +6,8 @@ import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
 import GoogleLogin from "../components/GoogleLogin";
 import { connectSocket } from "../socket/socket";
+import { setAuthToken, setUserData } from "../redux/slices/userSlice";
+import { useDispatch } from "react-redux";
 // import { Link, useNavigate } from 'react-router-dom'
 
 const Register = () => {
@@ -28,6 +30,7 @@ const Register = () => {
   const [otpVerified, setOtpVerified] = useState(false);
   const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   
   const handleOnChange = (e) => {
     const { name, value } = e.target;
@@ -148,8 +151,10 @@ const Register = () => {
         toast.success(data.message)
         
         localStorage.setItem("authToken", data.token);
-        localStorage.setItem("userData", JSON.stringify(data.user));
-        connectSocket();
+        // localStorage.setItem("userData", JSON.stringify(data.user));
+        dispatch(setAuthToken({authToken:data.token}))
+        dispatch(setUserData({userData:data.user}))
+        // connectSocket(data.token);
         
         navigate("/")
       }

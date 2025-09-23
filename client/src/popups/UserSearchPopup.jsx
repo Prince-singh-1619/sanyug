@@ -3,9 +3,11 @@ import { IoClose } from 'react-icons/io5'
 import { MdSearch, MdPersonAdd } from 'react-icons/md'
 import { BiUser } from 'react-icons/bi'
 import SummaryApi from '../helpers/SummaryApi'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { addNewConvo } from '../redux/slices/convoSlice'
-import { connectSocket } from '../socket/socket'
+import { connectSocket, getSocket } from '../socket/socket'
+
+connectSocket()
 
 const UserSearchPopup = ({ isOpen, onClose }) => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -16,11 +18,13 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
   const popupRef = useRef(null)
   const dispatch = useDispatch()
 
-  const authToken = localStorage.getItem("authToken");
-  const userData = JSON.parse(localStorage.getItem("userData"))
-  const userId = userData?.userId
+  // const authToken = localStorage.getItem("authToken");
+  // const userData = JSON.parse(localStorage.getItem("userData"))
+  const { authToken, userData } = useSelector(state => state.user)
+  const userId = userData?._id
 
-  const socket = connectSocket()
+  // const socket = connectSocket()
+  const socket = getSocket();
 
   // Close popup when clicking outside
   useEffect(() => {

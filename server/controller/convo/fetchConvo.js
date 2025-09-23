@@ -11,7 +11,8 @@ async function fetchConvoController(req, res){
             .find({participants: userId})
             .populate({
                 path: 'participants',
-                select: '_id firstName lastName profilePic lastSeen'
+                // select: '_id firstName lastName profilePic lastSeen'
+                select: '_id firstName lastName username profilePic isVerified status lastSeen createdAt'
             })
             .sort({updatedAt: -1}) // Most recent first
         .lean(); // convert to plain JS object

@@ -21,6 +21,10 @@ const SummaryApi = {
         url:`${backendDomain}/api/auth/google`,
         method: "POST"
     },
+    updateProfile:{
+        url:`${backendDomain}/api/edit-profile`,
+        method: "PUT"
+    },
     searchUser:{
         url:`${backendDomain}/api/search-user`,
         method: "GET"

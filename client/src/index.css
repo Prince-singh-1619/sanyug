@@ -21,7 +21,6 @@
 :root {
   color: #213547;
   background-color: #E2E8F0;
-  
 }
 
 /* Dark mode styles */
@@ -31,7 +30,7 @@
 }
 
 .dark body {
-  background-color: #1a1a1a;
+  /* background-color: #1a1a1a; */
   color: #dadada;
 }
 
@@ -124,4 +123,8 @@
 .mobile-chat-screen { width: auto; }
 @media (max-width: 767px) {
   .mobile-chat-screen { width: var(--mobile-width); }
+}
+
+.bg-invert .dark {
+  filter: invert(1);
 }

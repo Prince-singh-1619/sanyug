@@ -30,8 +30,9 @@ const userSchema = new mongoose.Schema({
         required: true
     },
     profilePic: {
-        type: String,
-        default: ""
+        highResPic:{ type: String, default: "" },  // cloudinary url
+        highResPicPublicId: { type: String, default: "" }, //for deletion
+        lowResPic: { type: String, default: "" },  // mongoDB 
     },
     isVerified: {
         type: Boolean,

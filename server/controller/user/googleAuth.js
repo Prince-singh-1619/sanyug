@@ -55,7 +55,8 @@ async function googleAuthController(req, res) {
             //     email: user.email,
             //     profilePic: user.profilePic,
             // },
-            user: { userId: _id, ...rest._doc },
+            // user: { userId: _id, ...rest._doc },
+            user,
         });
     } catch (err) {
         console.error(err);

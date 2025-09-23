@@ -1,16 +1,17 @@
 import React from 'react'
 import { useDispatch } from 'react-redux';
-import { connectSocket } from './socket';
+import { connectSocket, getSocket } from './socket';
 import { useEffect } from 'react';
 import { convoTypingUser, resetAllTyping } from '../redux/slices/convoSlice';
 
-const socket = connectSocket();
+connectSocket();
+const socket = getSocket();
 
 const TypingEvents = () => {
     const dispatch = useDispatch()
 
     // const userData = JSON.parse(localStorage.getItem("userData"));
-    // const userId = userData?.userId;
+    // const userId = userData?._id;
 
     useEffect(()=>{
         socket.on("typing", ({sender, convoId})=>{

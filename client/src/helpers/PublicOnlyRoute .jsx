@@ -1,9 +1,11 @@
+import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
 
 const PublicOnlyRoute = ({ children }) => {
-  const isLoggedIn = localStorage.getItem("authToken");
+  // const isLoggedIn = localStorage.getItem("authToken");
+  const { authToken } = useSelector(state => state.user)
 
-  return isLoggedIn ? <Navigate to="/" replace /> : children;
+  return authToken ? <Navigate to="/" replace /> : children;
 };
 
 export default PublicOnlyRoute;

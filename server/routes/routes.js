@@ -17,6 +17,7 @@ const deleteMessageController = require('../controller/message/deleteMessage')
 const authToken = require('../middleware/authToken')
 const googleAuthController = require('../controller/user/googleAuth')
 const storeMediaController = require('../controller/message/storeMedia')
+const updateProfileController = require('../controller/user/updateProfile')
 
 
 
@@ -25,6 +26,7 @@ router.post('/verify-otp', verifyOtpController)
 router.post('/register', signUpController)
 router.post('/login', loginController)
 router.post('/auth/google', googleAuthController)
+router.put('/edit-profile', authToken, updateProfileController)
 
 router.get('/search-user', authToken, searchUserController)
 router.post('/conversations/add-user-to-chat', authToken, addUserToChatController)

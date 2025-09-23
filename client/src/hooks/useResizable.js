@@ -1,7 +1,14 @@
 import { useState, useRef, useEffect } from "react";
+import { useDispatch, useSelector } from 'react-redux'
+import { setLeftPanelWidth } from "../redux/slices/settingSlice";
 
 export default function useResizable(initialWidth = 25, min = 20, max = 50) {
-  const savedWidth = localStorage.getItem("leftPanelWidth"); // read once
+  const dispatch = useDispatch()
+
+  // const savedWidth = localStorage.getItem("leftPanelWidth"); // read once
+  const { leftPanelWidth } = useSelector(state => state.settings)
+  const savedWidth = leftPanelWidth
+
   const [width, setWidth] = useState(savedWidth ? parseFloat(savedWidth) : initialWidth);
 
   const isDragging = useRef(false);
@@ -9,7 +16,8 @@ export default function useResizable(initialWidth = 25, min = 20, max = 50) {
 
   // Sync width state with localStorage + ref
   useEffect(() => {
-    localStorage.setItem("leftPanelWidth", width);
+    // localStorage.setItem("leftPanelWidth", width);
+    dispatch(setLeftPanelWidth({ newWidth:leftPanelWidth }))
     widthRef.current = width;
   }, [width]);
 
@@ -35,16 +43,6 @@ export default function useResizable(initialWidth = 25, min = 20, max = 50) {
     isDragging.current = false;
   };
 
-  // useEffect(() => {
-  //   window.addEventListener("mousemove", handleMouseMove);
-  //   window.addEventListener("mouseup", handleMouseUp);
-
-  //   return () => {
-  //     window.removeEventListener("mousemove", handleMouseMove);
-  //     window.removeEventListener("mouseup", handleMouseUp);
-  //   };
-  // }, []);
-
   // resize listener for mobile override
   useEffect(() => {
     const handleResize = () => {
@@ -52,7 +50,8 @@ export default function useResizable(initialWidth = 25, min = 20, max = 50) {
         setWidth(100); // force full width
       } else {
         // restore from saved value or fallback to initialWidth
-        const saved = localStorage.getItem("leftPanelWidth");
+        // const saved = localStorage.getItem("leftPanelWidth");
+        const saved = leftPanelWidth;
         setWidth(saved ? parseFloat(saved) : initialWidth);
       }
     };

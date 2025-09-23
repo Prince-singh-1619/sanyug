@@ -70,10 +70,10 @@ const Sidebar = () => {
     ]
 
     return (
-        <>
+        <section className='h-full '>
             {/* ICON SIDEBAR (always visible) */}
             <section className="h-full flex flex-col justify-between items-center rounded-lg bg-transparent py-2">
-                <div className="flex flex-col items-center gap-2">
+                <div className="flex flex-col items-center gap-2 ">
                     <button
                         onClick={() => setIsPanelOpen(true)}
                         title='Menu'
@@ -172,7 +172,7 @@ const Sidebar = () => {
                     </div>
                 </div>
             )}
-        </>
+        </section>
 
 
 // <section className='h-full flex flex-col justify-between items-center rounded-lg bg-transparent py-2'>

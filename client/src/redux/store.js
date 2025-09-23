@@ -7,20 +7,21 @@ import storage from "redux-persist/lib/storage"; // uses localStorage
 import userReducer from './slices/userSlice'
 import chatReducer from './slices/chatSlice'
 import convoReducer from './slices/convoSlice'
+import settingReducer from './slices/settingSlice'
 
 // combine all reducers here(future also)
 const rootReducer = combineReducers({
     chat: chatReducer,
     convo: convoReducer,
     user: userReducer, 
-    // settings: settingsReducer,
+    settings: settingReducer,
 });
 
 // persist config
 const persistConfig = {
     key: "root",
     storage,
-    whitelist: ["user", "chat", "convo"], // only persist chat (can add user, settings later)
+    whitelist: ["user", "chat", "convo", "settings"], // persist on refresh
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

@@ -7,7 +7,7 @@ async function authToken(req, res, next){
         const token = authHeader && authHeader.split(" ")[1];
         if(!token){
             return res.status(401).json({
-                message: "No token provided",
+                message: "No token provided in backend",
                 error: true, 
                 success: false
             })

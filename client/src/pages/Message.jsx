@@ -10,7 +10,7 @@ import SummaryApi from '../helpers/SummaryApi';
 // import { toast } from 'react-toastify';
 import { HiRefresh } from "react-icons/hi";
 import { AiOutlineSelect } from 'react-icons/ai';
-import { connectSocket } from '../socket/socket';
+import { connectSocket, getSocket } from '../socket/socket';
 import dayjs from "dayjs";
 import calendar from "dayjs/plugin/calendar";
 import ChatDropdown from '../components/ChatDropdown';
@@ -26,6 +26,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { encryptMessage, decryptMessage } from '../helpers/cryption'
 import { IoMdArrowBack, IoMdClose } from 'react-icons/io';
 import { Link, useNavigate } from 'react-router-dom';
+import sentSound from '../assets/notify 2.mp3'
+import defaultDoodleBg from '../assets/1.png'
+import NextUserProfile from '../popups/NextUserProfile';
+// import defaultDoodleBg from '../assets/doodle-2.png'
+
+connectSocket()
 
 const Message = () => {
   
@@ -44,6 +50,8 @@ const Message = () => {
   const pickerRef = useRef(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark")
+  const [showDetails, setShowDetails] = useState(false);
 
   const navigate = useNavigate()
   const dispatch = useDispatch()
@@ -54,14 +62,17 @@ const Message = () => {
 
   const convoId = activeConvoId
 
-  const authToken = localStorage.getItem("authToken");
-  const userData = JSON.parse(localStorage.getItem("userData"))
-  const userId = userData?.userId
+  // const authToken = localStorage.getItem("authToken");
+  // const userData = JSON.parse(localStorage.getItem("userData"))
+  const { authToken, userData } = useSelector(state => state.user)
+  const userId = userData?._id
+  const { isSound, isDefaultBg, chatBgWallpaper } = useSelector(state => state.settings)
 
   const typingUser = convoUserTyping[activeConvoId] || [] 
   const isTyping = typingUser.some(id => id !== userId);
   
-  const socket = connectSocket();
+  // const socket = connectSocket();
+  const socket = getSocket();
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -73,20 +84,25 @@ const Message = () => {
   const handleFileUpload = async(media) =>{
     if(!media) return
 
-    const formData = new FormData()
-    formData.append("file", selectedFile)
-
-    const res = await fetch(SummaryApi.sendMedia.url, {
-      method:SummaryApi.sendMedia.method,
-      headers: {
-        Authorization: `Bearer ${authToken}`
-      },
-      body: formData
-    })
-
-    const resData = await res.json();
-    console.log("File uploaded", resData)
-    return resData
+    try {
+      const formData = new FormData()
+      formData.append("file", selectedFile)
+  
+      const res = await fetch(SummaryApi.sendMedia.url, {
+        method:SummaryApi.sendMedia.method,
+        headers: {
+          Authorization: `Bearer ${authToken}`
+        },
+        body: formData
+      })
+  
+      const resData = await res.json();
+      console.log("File uploaded", resData)
+      return resData
+    } catch (error) {
+      toast.error("Error uploading highRes DP")
+      console.log(error)
+    }
   }
 
   const handleKeyPress = (e) => {
@@ -170,8 +186,6 @@ const Message = () => {
       body: JSON.stringify(payload)
       }), 
       {
-        loading: "Sending...",
-        success: "Message sent",
         error: "Failed to send message"
       }
     );
@@ -182,8 +196,7 @@ const Message = () => {
 
     const resData = await res.json();
     if(resData.success){
-      // const audio = new Audio("/sounds/send-message.mp3");
-      // audio.play().catch((err) => console.log("Audio play error:", err));
+      if(isSound) new Audio(sentSound).play().catch((err) => console.log("Sent audio play error: ", err));
       // toast.success(resData.message)
       // Emit live events to other clients
       dispatch(updateTempMsgId({ convoId, tempId, newId:resData.data._id, newPublicId:resData.data?.media?.publicId }));
@@ -212,13 +225,19 @@ const Message = () => {
     console.log("fetching messages..")
     console.log("convoId in message:", convoId)
     try { 
-      const res = await fetch(`${SummaryApi.fetchMessage.url}?convoId=${convoId}&userId=${userId}`, {
+      const res = await toast.promise(fetch(`${SummaryApi.fetchMessage.url}?convoId=${convoId}&userId=${userId}`, {
         method: SummaryApi.fetchMessage.method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`,
-        },
-      })
+        }
+      }),
+      {
+        loading: "fetching...",
+        success: "Message fetched",
+        error: "Failed to get message"
+      }
+    )
 
       const resData = await res.json()
       if(resData.success){
@@ -229,15 +248,15 @@ const Message = () => {
         console.log("MessageList from getMessages", resData.data)
         // dispatch(setMessages({convoId, messages:resData.data})) //store in redux
         dispatch(setMessages({convoId, messages:orgMsg})) //store in redux
-        toast.success(resData.message)
+        // toast.success(resData.message)
       }
       else{
-        toast.warning(resData.message)
+        // toast.warning(resData.message)
       }
     } 
     catch (error) {
       console.error("Failed to fetch messages", error);
-      toast.error("Failed to fetch messages");
+      // toast.error("Failed to fetch messages");
     }
   }
 
@@ -260,7 +279,7 @@ const Message = () => {
     const today = stripTime(now);
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-    const messageDate = stripTime(date);
+    // const messageDate = stripTime(date);
 
     // if (messageDate.getTime() === today.getTime()) {
       // Today → show time
@@ -368,29 +387,31 @@ const Message = () => {
   });
 
 // console.log("final",messageList[convoId])
-console.log("selectedFile", selectedFile)
+// console.log("activeChat", activeChat)
 
 
   return (
     <section className='w-full h-[99vh] max-h-screen flex flex-col  rounded-lg border border-slate-400 shadow-sm'>
       {/* Header */}
       <header className='h-16 w-full px-2 py-3 flex justify-between items-center bg-gray-300 dark:bg-gray-600 border-b border-gray-200 dark:border-gray-700 rounded-t-lg'>
-        <button className='flex items-center gap-3 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors'>
+        <div className='flex justify-center items-center'>
           <Link onClick={handleBackNav} className='hidden max-md:block p-2'> <IoMdArrowBack/> </Link> 
-          <img src={activeChat?.profilePic || dummyDp} alt='Profile' className='w-10 h-10 object-cover rounded-lg border-2 border-gray-200 dark:border-gray-800' />
-          <div className='flex flex-col items-start'>
-            <p className='font-semibold text-gray-900 dark:text-white text-lg capitalize'>{activeChat?.name}</p>
-            {/* Online  */}
-            <span className={`text-xs ${activeConvoId===activeConvoId_otherSide ? 'text-green-600 dark:text-green-400' : 'opacity-85'}  flex items-center gap-1`}>
-              {activeConvoId===activeConvoId_otherSide ? <div className='w-2 h-2 bg-green-500 rounded-full'></div> : ''}
-              {isTyping ? (
-                "Typing..."
-                ) : (
-                  activeConvoId===activeConvoId_otherSide ? "Online" : ` Last seen at ${userLastSeen}`
-              )}
-            </span>
-          </div>
-        </button>
+          <button onClick={()=>setShowDetails(true)} className='flex items-center gap-3  cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors'>
+            <img src={activeChat?.profilePic?.lowResPic || dummyDp} alt='Profile' className='w-10 h-10 object-cover rounded-lg border-2 border-gray-200 dark:border-gray-800' />
+            <div className='flex flex-col items-start'>
+              <p className='font-semibold text-gray-900 dark:text-white text-lg capitalize'>{activeChat?.name}</p>
+              {/* Online  */}
+              <span className={`text-xs ${activeConvoId===activeConvoId_otherSide ? 'text-green-600 dark:text-green-400' : 'opacity-85'}  flex items-center gap-1`}>
+                {activeConvoId===activeConvoId_otherSide ? <div className='w-2 h-2 bg-green-500 rounded-full'></div> : ''}
+                {isTyping ? (
+                  "Typing..."
+                  ) : (
+                    activeConvoId===activeConvoId_otherSide ? "Online" : ` Last seen at ${userLastSeen}`
+                )}
+              </span>
+            </div>
+          </button>
+        </div>
 
         <div className='relative flex items-center gap-2'>
           <button onClick={handleGetMessages} className='max-[425px]:hidden p-3 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors'>
@@ -406,10 +427,20 @@ console.log("selectedFile", selectedFile)
           <div className='absolute z-50 right-4 top-16 '>{chatDropdown && (<ChatDropdown/>)}</div>
           
         </div>
+
+        <NextUserProfile user={activeChat} isOpen={showDetails} onClose={()=>setShowDetails(false)} />
       </header>
 
-      {/* Messages Area */}
-      <div className='flex-1 w-full p-1 overflow-y-auto '>
+    {/* Messages Area */}
+    <section className="relative flex-1 w-full h-1/2 p-1">
+      {/* Background image*/}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <img src={isDefaultBg ? defaultDoodleBg : chatBgWallpaper} alt="chat" className={`w-full h-full object-cover ${isDefaultBg ? 'opacity-20 dark:opacity-10 invert-50 dark:invert-0' : 'opacity-15'}  pointer-events-none`} />
+      </div>
+
+      <div className={`relative flex-1 w-full h-full p-1  overflow-y-auto `}>
+        {/* <img src={isDefaultBg ? defaultDoodleBg : chatBgWallpaper} alt='chat' className={`absolute top-0 left-0 w-full h-full object-cover opacity-20 dark:opacity-10 invert-50 dark:invert-0 pointer-events-none`} /> */}
+        
         {!messageList && <div className='flex flex-col items-center justify-center h-full text-center'>
           <div className='w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4'>
             <AiOutlineSelect className='text-2xl text-gray-500 dark:text-gray-400' />
@@ -423,7 +454,7 @@ console.log("selectedFile", selectedFile)
          </div>
         }
 
-        <div className="w-full h-full flex flex-col mt-2 mb-4">
+        <div className="w-full h-full flex flex-col my-2">
           <span className='text-yellow-800 dark:text-yellow-300 w-fit mx-auto text-center bg-slate-300 dark:bg-[#151515] px-4 py-1 rounded-lg border'>Your messages on Sanyug are end to end encrypted</span>
           {Object.entries(groupMessagesByDate(filteredMessages || [])).map(([date, msgs]) => (
             <div key={date}>
@@ -451,7 +482,7 @@ console.log("selectedFile", selectedFile)
                     </div>
                   )}                  
 
-                  <div className={` relative flex flex-col w-fit max-w-[80%] h-fit text-lg font-medium border  rounded-md ${data.sender===userId ? "rounded-br-none bg-green-400 dark:bg-green-700" : "rounded-bl-none bg-slate-300 dark:bg-black/25"}  `}>
+                  <div className={` relative flex flex-col w-fit max-w-[80%] h-fit text-lg font-medium border  rounded-md ${data.sender===userId ? "rounded-br-none bg-green-400 dark:bg-green-700" : "rounded-bl-none bg-slate-300 dark:bg-[#151515]"}  `}>
                     
                     {data.media && (
                       <section className='lazy-loading px-2'>
@@ -499,7 +530,7 @@ console.log("selectedFile", selectedFile)
                       <i onClick={()=>!data.isTemp && setDeleteMsgId(data._id)} 
                         className={`absolute top-1/2 -left-10 transform -translate-y-1/2 hidden 
                           ${data.isTemp ? 'cursor-not-allowed' : 'cursor-pointer'} 
-                          ${data.isRemoved ? 'hidden':'group-hover:flex'} h-8 w-8 text-2xl bg-red-500 hover:bg-red-600 text-slate-100 rounded-full justify-center items-center`}> 
+                          ${data.isRemoved ? 'hidden':'group-hover:flex max-md:flex max-md:opacity-10'} h-8 w-8 text-2xl bg-red-500 hover:bg-red-600 text-slate-100 rounded-full justify-center items-center`}> 
                         {isDeleting && deleteMsgId===data._id ? (
                           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                         ) : (
@@ -522,7 +553,9 @@ console.log("selectedFile", selectedFile)
             <DeleteConfirm msgId={deleteMsgId} open={deleteMsgId!==null} setOpen={()=>setDeleteMsgId(null)}/>
           )}
         </div>
+
       </div>
+    </section>
 
       {/* Footer - Message Input */}
       <footer className='relative h-20 w-full p-4 max-[425px]:px-2 bg-gray-300 dark:bg-gray-600 border-t border-gray-200 dark:border-gray-700 rounded-b-lg'>

@@ -1,15 +1,20 @@
 import React, { useEffect } from 'react'
-import { connectSocket } from './socket';
-import { addNewConvo } from '../redux/slices/convoSlice';
-import { useDispatch } from 'react-redux';
+import { connectSocket, getSocket } from './socket';
+import { addNewConvo, clearConvoState } from '../redux/slices/convoSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { clearChatState } from '../redux/slices/chatSlice';
 
-const socket = connectSocket();
+connectSocket();
+const socket = getSocket();
 
 const ConvoEvents = () => {
     const dispatch = useDispatch()
 
     const userData = JSON.parse(localStorage.getItem("userData"))
-    const userId = userData?.userId
+    const userId = userData?._id
+
+    const { activeParticipants } = useSelector(state => state.convo);
+
 
     const formatChatTimestamp = (dateString) =>{
         if (!dateString) return "";
@@ -34,6 +39,17 @@ const ConvoEvents = () => {
         return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
         }
     }
+
+    // on refresh/reconnect, inform server about my activeConvoId again
+    useEffect(()=>{
+        const handleBeforeUnload = () =>{
+            dispatch(clearChatState());
+            dispatch(clearConvoState());
+            socket.emit("active-convo-id", ({ sender:userId, activeConvoId:null, prevParticipants:activeParticipants, activeParticipants:[] }));
+        }
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    }, [socket, userId, activeParticipants])
 
     useEffect(()=>{
         socket.on("new-convo-added-received", ({newConvoForB})=>{

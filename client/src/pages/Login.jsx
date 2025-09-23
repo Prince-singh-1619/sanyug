@@ -6,6 +6,8 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import ThemeToggle from '../components/ThemeToggle';
 import GoogleLogin from '../components/GoogleLogin';
 import { connectSocket } from '../socket/socket';
+import { setAuthToken, setUserData } from '../redux/slices/userSlice';
+import { useDispatch } from 'react-redux';
 
 const Login = () => {
     const [form, setForm] = useState({
@@ -18,8 +20,9 @@ const Login = () => {
 
     const [showPassword, setShowPassword] = useState(false)
     const navigate = useNavigate()
+    const dispatch = useDispatch()
 
-    const socket = connectSocket();
+    // const socket = connectSocket();
     
     const handleOnChange = (e) => {
         const { name, value } = e.target;
@@ -53,12 +56,15 @@ const Login = () => {
             const data = await res.json()
             if(data.success && data.token && data.user) {
                 console.log("dataApi message from success: ", data.message)
-                // socket.emit("join", data.user.userId) // join user room for socket
+                // socket.emit("join", data.user._id) // join user room for socket
 
-                // localStorage.setItem("authToken", JSON.stringify(data.token));
                 localStorage.setItem("authToken", data.token);
-                localStorage.setItem("userData", JSON.stringify(data.user));
-                connectSocket();
+                // localStorage.setItem("userData", JSON.stringify(data.user));
+
+                dispatch(setAuthToken({authToken:data.token}))
+                dispatch(setUserData({userData:data.user}))
+                console.log("dispatch called...........")
+                // connectSocket(data.token);
 
                 toast.success(data.message)
                 navigate("/")

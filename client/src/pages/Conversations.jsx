@@ -1,20 +1,11 @@
 import React from 'react'
-// import Message from './Message'
-// import { FaEye } from 'react-icons/fa'
-// import pic1 from '../assets/hero image.png'
-// import pic2 from '../assets/prince-2.png'
-// import pic3 from '../assets/tabish.jpg'
-// import pic4 from '../assets/crsl-l1.jpg'
-// import pic5 from '../assets/pratham.jpg'
 import dummyDp from '../assets/person-dummy.svg'
 import { useState } from 'react'
 import { useEffect } from 'react'
 import SummaryApi from '../helpers/SummaryApi'
 import Sidebar from '../components/Sidebar'
 import { AiOutlineSelect } from "react-icons/ai";
-// import ResizableDiv from '../helpers/ResizableDiv'
-// import { connectSocket } from '../socket/socket'
-import { Outlet, useNavigate, useParams } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { setActiveChat } from '../redux/slices/chatSlice'
 import { resetUnreadCount, setActiveConvo, setConvos } from '../redux/slices/convoSlice'
@@ -28,14 +19,15 @@ import { HiOutlineDocumentSearch } from 'react-icons/hi'
 import ConvoDropdown from '../components/ConvoDropdown'
 import UserSearchPopup from '../popups/UserSearchPopup'
 import useIsMobile from '../hooks/useIsMobile'
-// import { Socket } from 'socket.io-client'
-// import { connectSocket } from '../socket/socket'
 
 
 const Conversations = () => {
-    const authToken = localStorage.getItem("authToken");
-    const userData = JSON.parse(localStorage.getItem("userData"))
-    const userId = userData?.userId
+    // const authToken = localStorage.getItem("authToken");
+    // const userData = JSON.parse(localStorage.getItem("userData"))
+    const { authToken, userData } = useSelector(state => state.user)
+    const userId = userData?._id
+
+    console.log("authToken", typeof authToken, "userData", typeof userData)
 
     const { width, handleMouseDown } = useResizable(25, 20, 45);
     // const [unformattedList, setUnformattedList] = useState([])
@@ -277,7 +269,7 @@ const Conversations = () => {
         <Sidebar/>
       </section>
 
-      <section style={{ width: `${width}%`}} className="h-[99vh] ml-2 mr-1 min-w-1/5 border border-slate-400 rounded-lg transition-all md:max-w-1/2">
+      <section style={{ width: `${width}%`}} className="h-[99vh] min-w-56 ml-2 mr-1 border border-slate-400 rounded-lg transition-all md:max-w-1/2 overflow-hidden">
         <div className='w-full mx-auto border-b border-slate-400 py-4 px-2 flex gap-2 justify-center' >
             <div className="w-[95%] h-10 rounded-lg border border-slate-500 flex items-center px-3 gap-2 bg-slate-300/50 dark:bg-[#1a1a1a]">
                 <HiOutlineDocumentSearch className="text-xl text-gray-800 dark:text-gray-300" />
@@ -315,7 +307,7 @@ const Conversations = () => {
                         <button key={index} onClick={()=>displayMessage(index)} className={`h-18 my-auto cursor-pointer border-b border-slate-400 hover:bg-gray-300 dark:hover:bg-gray-500/75 ${activeConvoId===data.convoId ? 'bg-gray-400/75 dark:bg-gray-600 text-black dark:text-white':''}`}>
                             <div className='w-full flex items-center justify-between px-2 '>
                                 <div className='w-full flex items-center gap-2 justify-center'>
-                                    <img src={data.profilePic ? data.profilePic : dummyDp} alt={data?.name} className='w-12 h-12 rounded-lg object-cover'/>
+                                    <img src={data.profilePic ? data.profilePic?.lowResPic : dummyDp} alt={data?.name} className='w-12 h-12 rounded-lg object-cover'/>
                                     <div className='w-full flex flex-col items-start'>
                                         <div className='w-full flex items-center justify-between'>
                                             <p className='text-lg font-lg capitalize'>{data?.name}</p>

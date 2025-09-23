@@ -4,7 +4,9 @@ import SummaryApi from '../helpers/SummaryApi';
 import { deleteMessage } from '../redux/slices/chatSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-hot-toast';
-import { connectSocket } from '../socket/socket';
+import { connectSocket, getSocket } from '../socket/socket';
+
+connectSocket()
 
 const DeleteConfirm = ({msgId, open, setOpen}) => {
     // console.log("msgId frontend: ", msgId)
@@ -13,11 +15,13 @@ const DeleteConfirm = ({msgId, open, setOpen}) => {
     // const [deleteBox, setDeleteBox] = useState(false);
     const {activeConvoId, convoList} = useSelector((state)=>state.convo)
 
-    const authToken = localStorage.getItem("authToken");
-    const userData = JSON.parse(localStorage.getItem("userData"))
-    const userId = userData?.userId
+    // const authToken = localStorage.getItem("authToken");
+    // const userData = JSON.parse(localStorage.getItem("userData"))
+    const { authToken, userData } = useSelector(state => state.user)
+    const userId = userData?._id
 
-    const socket = connectSocket()
+    // const socket = connectSocket()
+    const socket = getSocket();
 
     const receivers = convoList.find(c=>c.convoId===activeConvoId).participants.filter(p => p._id !== userId).map(p=>p._id) || [];
     console.log("getParticipants", receivers)
@@ -77,7 +81,7 @@ const DeleteConfirm = ({msgId, open, setOpen}) => {
     <section>
       {open && (
         <div onClick={handleCancel} className="fixed inset-0 backdrop-blur-[1px] flex items-center justify-center z-50">
-          <div onClick={(e) => e.stopPropagation()} className="bg-opacity-10 backdrop-blur-none bg-white dark:bg-black border p-6 rounded-2xl w-fit">
+          <div onClick={(e) => e.stopPropagation()} className="bg-opacity-10 backdrop-blur-none bg-slate-300 dark:bg-[#151515] border p-6 rounded-2xl w-fit">
             <h2 className="text-lg font-semibold text-red-600 dark:text-red-500">Delete Message?</h2>
             <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 flex flex-col">
                 <span>Are you sure you want to delete this message?</span>

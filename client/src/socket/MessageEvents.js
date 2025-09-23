@@ -1,20 +1,24 @@
 import React, { useEffect } from "react";
-import { connectSocket } from "./socket";
-import { addMessage, clearChatState, deleteMessage, markMessageAsRead, markMessageDelivered } from "../redux/slices/chatSlice";
+import { connectSocket, getSocket } from "./socket";
+import { addMessage, deleteMessage, markMessageAsRead, markMessageDelivered } from "../redux/slices/chatSlice";
 import { useDispatch, useSelector } from "react-redux";
-import { clearConvoState, markLastMsgDelivered, markLastMsgRead, markUserOffline, setLastMessage, updateUnreadCount } from "../redux/slices/convoSlice";
+import { markLastMsgDelivered, markLastMsgRead, markUserOffline, setLastMessage, updateUnreadCount } from "../redux/slices/convoSlice";
 import { decryptMessage } from "../helpers/cryption";
+import new_msg from '../assets/notify 3.mp3'
+import new_notification from '../assets/notify 1.mp3'
 
-const socket = connectSocket();
+connectSocket();
+const socket = getSocket();
 
 const MessageEvents = () => {
     const dispatch = useDispatch()
 
     const userData = JSON.parse(localStorage.getItem("userData"));
-    const userId = userData?.userId;
+    const userId = userData?._id;
 
     const { activeConvoId, prevParticipants, activeParticipants } = useSelector(state => state.convo);
     const { activeConvoId_otherSide } = useSelector(state=> state.chat);
+    const { isSound } = useSelector(state => state.settings)
     // console.log("MessageEvents activeConvoId:", activeConvoId);
 
     // for receiver
@@ -23,13 +27,20 @@ const MessageEvents = () => {
             console.log("msg received", msg);
             const plainText = await decryptMessage(msg.text, msg.conversationId);
             const orgMsg =  {...msg, text: plainText, }// replace encrypted with decrypted
-            // };
+            
             // console.log( "convoId being used:", msg.conversationId, typeof msg.conversationId );
+            // if(isSound && msg.conversationId===activeConvoId){
+            //     console.log("is Read", msg.conversationId===activeConvoId)
+            //     new Audio(new_msg).play().catch((err)=>console.log("Sound coundn't play: ", err))
+            // }
+            if(isSound && msg.conversationId!==activeConvoId){
+                console.log("is delivered", msg.conversationId!==activeConvoId)
+                new Audio(new_notification).play().catch((err)=>console.log("Sound coundn't play: ", err))
+            }
 
             dispatch(addMessage({ message: orgMsg }));
             dispatch(updateUnreadCount({convoId:orgMsg.conversationId, activeConvoId_otherSide}))
             dispatch(setLastMessage({ convoId: orgMsg.conversationId, msg:orgMsg }));
-            // dispatch(markMessageAsRead)
             // receiver to sender
             socket.emit("message-delivered", { msgId:orgMsg._id, sender:orgMsg.sender, receiver:userId, activeConvoId});
             console.log("message-delivered emitted from receiver");
@@ -58,21 +69,8 @@ const MessageEvents = () => {
     useEffect(()=>{
         // console.log("active convoId before emitting: ", activeConvoId)
         // send activeConvoId to all participants to server
-        // socket.emit("active-convo-id", ({ sender:userId, participants, activeConvoId }));
         socket.emit("active-convo-id", ({ sender:userId, activeConvoId, prevParticipants, activeParticipants }));
     }, [activeConvoId, socket, userId])
-
-    // on refresh/reconnect, inform server about my activeConvoId again
-    useEffect(()=>{
-        const handleBeforeUnload = () =>{
-            dispatch(clearChatState());
-            dispatch(clearConvoState());
-            socket.emit("active-convo-id", ({ sender:userId, activeConvoId:null, prevParticipants:activeParticipants, activeParticipants:[] }));
-        }
-        window.addEventListener("beforeunload", handleBeforeUnload);
-        return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-    }, [socket, userId, activeParticipants])
-
 
     // participant-left-active & participant-joined-active
     useEffect(() => {
@@ -103,8 +101,8 @@ const MessageEvents = () => {
         socket.on("message-delete-received", ({msgId, convoId})=>{
             dispatch(deleteMessage({msgId, convoId}));
         })
+        return () => socket.off("message-delete-received")
     })
-
 
     return null;
 };

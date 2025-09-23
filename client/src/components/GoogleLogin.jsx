@@ -3,17 +3,21 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FcGoogle } from "react-icons/fc";
 import SummaryApi from "../helpers/SummaryApi";
-import { connectSocket } from "../socket/socket";
+import { connectSocket, getSocket } from "../socket/socket";
+import { setAuthToken, setUserData } from "../redux/slices/userSlice";
+import { useDispatch } from "react-redux";
 
 const GoogleLogin = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const dispatch = useDispatch()
     const from = location.state?.from?.pathname || '/';
     const googleBtnRef = useRef(null);
     const [isGoogleSDKReady, setIsGoogleSDKReady] = useState(false);
     const [isButtonRendered, setIsButtonRendered] = useState(false);
     const [loading, setLoading] = useState(false)
-    const socket = connectSocket();
+    // const socket = connectSocket();
+    const socket = getSocket();
 
     useEffect(() => {
         // Function to check if Google SDK is loaded
@@ -105,8 +109,10 @@ const GoogleLogin = () => {
                 // socket.emit("join", data.user.userId) // join user room for socket
                 // Store JWT token and user data in localStorage
                 localStorage.setItem("authToken", data.token);
-                localStorage.setItem("userData", JSON.stringify(data.user));
-                connectSocket();
+                // localStorage.setItem("userData", JSON.stringify(data.user));
+                dispatch(setAuthToken({authToken:data.token}))
+                dispatch(setUserData({userData:data.user}))
+                // connectSocket(data.token);
                 
                 toast.success("Successfully logged in with Google!");
                 navigate(from, { replace: true });

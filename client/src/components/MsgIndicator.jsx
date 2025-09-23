@@ -9,7 +9,7 @@ const MsgIndicator = ({message}) => {
     // console.log("totalReceivers prop type:", typeof totalReceivers, totalReceivers);
 
     // const userData = JSON.parse(localStorage.getItem("userData"))
-    // const userId = userData?.userId
+    // const userId = userData?._id
 
     // not sent yet
     if (_id.length === 13 && /^\d+$/.test(_id)) {

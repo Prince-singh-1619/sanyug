@@ -56,7 +56,8 @@ async function signUpController(req, res){
             //     email: userWithoutPassword.email,
             //     profilePic: userWithoutPassword.profilePic,
             // },
-            user: { userId: _id, ...userWithoutPassword._doc },
+            // user: { userId: _id, ...userWithoutPassword._doc },
+            user,
             success: true, 
             error: false,
         })

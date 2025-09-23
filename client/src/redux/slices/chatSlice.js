@@ -7,9 +7,6 @@ const initialState = {
     messageList: {},
 };
 
-// const userData = JSON.parse(localStorage.getItem("userData"))
-// const userId = userData?.userId
-
 
 const chatSlice = createSlice({
     name: "chat",

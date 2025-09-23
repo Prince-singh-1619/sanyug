@@ -20,7 +20,7 @@ function serverSocketHandler(io){
     
       const token = socket.handshake.auth?.token;
       if (!token) {
-        // console.log("No token provided");
+        console.log("No token provided in socket");
         socket.disconnect();
         return;
       }
@@ -32,7 +32,7 @@ function serverSocketHandler(io){
         const userId = decoded.userId; // assuming your JWT payload has { id: user._id }
     
         socket.join(userId.toString());
-        // console.log(`User ${userId} joined the room`);
+        console.log(`User ${userId} joined the room`);
         // console.log("socket.activeParticipants", socket.activeParticipants, "socket.activeConvoId", socket.activeConvoId)
         if(socket.activeParticipants && socket.activeConvoId){
           socket.activeParticipants.forEach(memberId => {
