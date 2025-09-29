@@ -106,17 +106,30 @@ const convoSlice = createSlice({
                 // }
             }
         },
+        // markLastMsgRead: (state, action)=>{
+        //     const { activeConvoId_otherSide, sender } = action.payload
+        //     const convo = state.convoList.find(c=> c.convoId===activeConvoId_otherSide)
+        //     if(!convo || !convo.lastMsg) return;
+
+        //     const msg = convo.lastMsg
+        //     if(!msg.readBy) msg.readBy = [];
+
+        //     // add receiver if not present
+        //     if(!msg.readBy.includes(sender)){
+        //         msg.readBy.push(sender)
+        //     }
+        // },
         markLastMsgRead: (state, action)=>{
-            const { activeConvoId_otherSide, sender } = action.payload
-            const convo = state.convoList.find(c=> c.convoId===activeConvoId_otherSide)
+            const { reader, convoId } = action.payload
+            const convo = state.convoList.find(c=> c.convoId===convoId)
             if(!convo || !convo.lastMsg) return;
 
             const msg = convo.lastMsg
             if(!msg.readBy) msg.readBy = [];
 
             // add receiver if not present
-            if(!msg.readBy.includes(sender)){
-                msg.readBy.push(sender)
+            if(!msg.readBy.includes(reader)){
+                msg.readBy.push(reader)
             }
         },
         updateUnreadCount: (state, action)=>{

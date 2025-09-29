@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { addNewConvo } from '../redux/slices/convoSlice'
 import { connectSocket, getSocket } from '../socket/socket'
 
-connectSocket()
+// connectSocket()
 
 const UserSearchPopup = ({ isOpen, onClose }) => {
   const [searchQuery, setSearchQuery] = useState('')

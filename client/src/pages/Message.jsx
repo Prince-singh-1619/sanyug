@@ -31,7 +31,7 @@ import defaultDoodleBg from '../assets/1.png'
 import NextUserProfile from '../popups/NextUserProfile';
 // import defaultDoodleBg from '../assets/doodle-2.png'
 
-connectSocket()
+// connectSocket()
 
 const Message = () => {
   
@@ -52,10 +52,12 @@ const Message = () => {
   const [search, setSearch] = useState("");
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark")
   const [showDetails, setShowDetails] = useState(false);
+  const [isOnline, setIsOnline] = useState(false);
 
   const navigate = useNavigate()
   const dispatch = useDispatch()
-  const {activeChat, messageList, activeConvoId_otherSide} = useSelector((state)=>state.chat)
+  const onlineUsers = useSelector(state => state.onlineUsers?.onlineUsers)
+  const { activeChat, messageList } = useSelector((state)=>state.chat)
   const { activeConvoId, convoList, convoUserTyping } = useSelector(state => state.convo);
   const userLastSeen = convoList.find(c=>c.convoId===activeConvoId).lastSeen
   // console.log("convoList[activeConvoId].lastSeen", convoList[activeConvoId].lastSeen)
@@ -245,7 +247,7 @@ const Message = () => {
         // readMessages = resData.data.filter(m => m.readBy.includes(userId));
         // const unreadMessages = resData.data.filter(m => !m.readBy.includes(userId) && m.sender.toString() === userId);
         // console.log("readMessages", readMessages, "unreadMessages", unreadMessages)
-        console.log("MessageList from getMessages", resData.data)
+        // console.log("MessageList from getMessages", resData.data)
         // dispatch(setMessages({convoId, messages:resData.data})) //store in redux
         dispatch(setMessages({convoId, messages:orgMsg})) //store in redux
         // toast.success(resData.message)
@@ -304,6 +306,22 @@ const Message = () => {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messageList]); // runs whenever messageList updates
+
+  // check if user is online
+  useEffect(()=>{
+    if (!activeChat) return;
+    console.log("onlineUsers", onlineUsers)
+    const otherUserIds = activeChat.participants.filter(p=> p._id!==userId).map(p=>p._id)
+    const onlineStatus = otherUserIds.some(id=>onlineUsers.includes(id))
+    setIsOnline(onlineStatus)
+  }, [activeChat, userId])
+
+  useEffect(()=>{
+    const sender = activeChat?.participants.filter(p=> p._id!==userId).map(p=>p._id)
+    socket.emit("message-read", ({convoId:activeConvoId, reader:userId, sender}))
+    console.log("message-read emitted..")
+    console.log("convoId ",activeConvoId, ", reader ", userId, ", sender:", sender)
+  }, [activeConvoId, messageList[activeConvoId]?.length])
 
   // When user types in input box
   const typingTimeoutRef = useRef(null);
@@ -375,7 +393,7 @@ const Message = () => {
     navigate('/conversations')
   }
 
-  // filter convos to filterConvo and render
+  // filter convos for search
   const filteredMessages = (messageList?.[convoId] || []).filter(msg => {
     if (!search?.trim()) return true; // if search is empty, show all
 
@@ -401,12 +419,12 @@ const Message = () => {
             <div className='flex flex-col items-start'>
               <p className='font-semibold text-gray-900 dark:text-white text-lg capitalize'>{activeChat?.name}</p>
               {/* Online  */}
-              <span className={`text-xs ${activeConvoId===activeConvoId_otherSide ? 'text-green-600 dark:text-green-400' : 'opacity-85'}  flex items-center gap-1`}>
-                {activeConvoId===activeConvoId_otherSide ? <div className='w-2 h-2 bg-green-500 rounded-full'></div> : ''}
+              <span className={`text-xs ${isOnline ? 'text-green-600 dark:text-green-400' : 'opacity-85'}  flex items-center gap-1`}>
+                {isOnline ? <div className='w-2 h-2 bg-green-500 rounded-full'></div> : ''}
                 {isTyping ? (
                   "Typing..."
                   ) : (
-                    activeConvoId===activeConvoId_otherSide ? "Online" : ` Last seen at ${userLastSeen}`
+                    isOnline ? "Online" : ` Last seen at ${userLastSeen}`
                 )}
               </span>
             </div>

@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-hot-toast';
 import { connectSocket, getSocket } from '../socket/socket';
 
-connectSocket()
+// connectSocket()
 
 const DeleteConfirm = ({msgId, open, setOpen}) => {
     // console.log("msgId frontend: ", msgId)

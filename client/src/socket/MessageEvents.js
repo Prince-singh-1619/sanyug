@@ -13,8 +13,10 @@ const socket = getSocket();
 const MessageEvents = () => {
     const dispatch = useDispatch()
 
-    const userData = JSON.parse(localStorage.getItem("userData"));
+    // const userData = JSON.parse(localStorage.getItem("userData"));
+    const { userData } = useSelector(state => state.user)
     const userId = userData?._id;
+    console.log("userId in messageEvents:", userId)
 
     const { activeConvoId, prevParticipants, activeParticipants } = useSelector(state => state.convo);
     const { activeConvoId_otherSide } = useSelector(state=> state.chat);
@@ -28,11 +30,11 @@ const MessageEvents = () => {
             const plainText = await decryptMessage(msg.text, msg.conversationId);
             const orgMsg =  {...msg, text: plainText, }// replace encrypted with decrypted
             
-            // console.log( "convoId being used:", msg.conversationId, typeof msg.conversationId );
-            // if(isSound && msg.conversationId===activeConvoId){
-            //     console.log("is Read", msg.conversationId===activeConvoId)
-            //     new Audio(new_msg).play().catch((err)=>console.log("Sound coundn't play: ", err))
-            // }
+            console.log( "convoId being used:", msg.conversationId, typeof msg.conversationId );
+            if(isSound && msg.conversationId===activeConvoId){
+                console.log("is Read", msg.conversationId===activeConvoId)
+                new Audio(new_msg).play().catch((err)=>console.log("Sound coundn't play: ", err))
+            }
             if(isSound && msg.conversationId!==activeConvoId){
                 console.log("is delivered", msg.conversationId!==activeConvoId)
                 new Audio(new_notification).play().catch((err)=>console.log("Sound coundn't play: ", err))
@@ -42,13 +44,13 @@ const MessageEvents = () => {
             dispatch(updateUnreadCount({convoId:orgMsg.conversationId, activeConvoId_otherSide}))
             dispatch(setLastMessage({ convoId: orgMsg.conversationId, msg:orgMsg }));
             // receiver to sender
-            socket.emit("message-delivered", { msgId:orgMsg._id, sender:orgMsg.sender, receiver:userId, activeConvoId});
+            socket.emit("message-delivered", ({ msgId:orgMsg._id, sender:orgMsg.sender, receiver:userId, activeConvoId}));
             console.log("message-delivered emitted from receiver");
         });
         return () => {
             socket.off("new-message-received");
         };
-    }, [dispatch, userId]);
+    }, [dispatch, userId, activeConvoId]);
 
     // for sender - confirmation
     useEffect(() => {
@@ -65,36 +67,47 @@ const MessageEvents = () => {
         };
     }, [dispatch, userId]);
 
-    // inform server about my activeConvoId change
     useEffect(()=>{
-        // console.log("active convoId before emitting: ", activeConvoId)
-        // send activeConvoId to all participants to server
-        socket.emit("active-convo-id", ({ sender:userId, activeConvoId, prevParticipants, activeParticipants }));
-    }, [activeConvoId, socket, userId])
+        socket.on("message-read-confirmed", ({reader, convoId})=>{
+            console.log("message-read-confirmed received at sender")
+            console.log("reader", reader, ", convoId", convoId)
+            dispatch(markMessageAsRead({reader, convoId}))
+            dispatch(markLastMsgRead({reader, convoId}))
+        })
 
-    // participant-left-active & participant-joined-active
-    useEffect(() => {
-        const handleLeft = ({ activeConvoId_otherSide, sender }) => {
-            console.log("participant-left-active received", activeConvoId_otherSide);
-            dispatch(markMessageAsRead({ activeConvoId_otherSide, sender }));
-            dispatch(markLastMsgRead({ activeConvoId_otherSide, sender }));
-            dispatch(markUserOffline({ user: sender }))
-        };
+        return () => socket.off("message-read-confirmed")
+    })
 
-        const handleJoined = ({ activeConvoId_otherSide, sender }) => {
-            console.log("participant-joined-active received", activeConvoId_otherSide);
-            dispatch(markMessageAsRead({ activeConvoId_otherSide, sender }));
-            dispatch(markLastMsgRead({ activeConvoId_otherSide, sender }));
-        };
+    // inform server about my activeConvoId change
+    // useEffect(()=>{
+    //     // console.log("active convoId before emitting: ", activeConvoId)
+    //     // send activeConvoId to all participants to server
+    //     socket.emit("active-convo-id", ({ sender:userId, activeConvoId, prevParticipants, activeParticipants }));
+    // }, [activeConvoId, socket, userId])
 
-        socket.on("participant-left-active", handleLeft);
-        socket.on("participant-joined-active", handleJoined);
+    // // participant-left-active & participant-joined-active
+    // useEffect(() => {
+    //     const handleLeft = ({ activeConvoId_otherSide, sender }) => {
+    //         console.log("participant-left-active received", activeConvoId_otherSide);
+    //         dispatch(markMessageAsRead({ activeConvoId_otherSide, sender }));
+    //         dispatch(markLastMsgRead({ activeConvoId_otherSide, sender }));
+    //         dispatch(markUserOffline({ user: sender }))
+    //     };
 
-        return () => {
-            socket.off("participant-left-active", handleLeft);
-            socket.off("participant-joined-active", handleJoined);
-        };
-    }, [socket, dispatch]);
+    //     const handleJoined = ({ activeConvoId_otherSide, sender }) => {
+    //         console.log("participant-joined-active received", activeConvoId_otherSide);
+    //         dispatch(markMessageAsRead({ activeConvoId_otherSide, sender }));
+    //         dispatch(markLastMsgRead({ activeConvoId_otherSide, sender }));
+    //     };
+
+    //     socket.on("participant-left-active", handleLeft);
+    //     socket.on("participant-joined-active", handleJoined);
+
+    //     return () => {
+    //         socket.off("participant-left-active", handleLeft);
+    //         socket.off("participant-joined-active", handleJoined);
+    //     };
+    // }, [socket, dispatch]);
 
     // on message deletion
     useEffect(()=>{

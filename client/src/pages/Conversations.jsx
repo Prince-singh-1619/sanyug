@@ -27,15 +27,15 @@ const Conversations = () => {
     const { authToken, userData } = useSelector(state => state.user)
     const userId = userData?._id
 
-    console.log("authToken", typeof authToken, "userData", typeof userData)
+    // console.log("authToken", typeof authToken, "userData", typeof userData)
 
     const { width, handleMouseDown } = useResizable(25, 20, 45);
     // const [unformattedList, setUnformattedList] = useState([])
     // const [activeChat, setActiveChat] = useState([])
     // const [activeChatIdx, setActiveChatIdx] = useState(-1)
     // const [activeConvoId, setActiveConvoId] = useState(0)
-    const { activeConvoId_otherSide } = useSelector(state => state.chat);
-    console.log("activeConvoId_otherSide in Conversations:", activeConvoId_otherSide);
+    // const { activeConvoId_otherSide } = useSelector(state => state.chat);
+    // console.log("activeConvoId_otherSide in Conversations:", activeConvoId_otherSide);
 
     const { activeConvoId, convoList } = useSelector(state => state.convo);
     const [error, setError] = useState(false)
@@ -123,7 +123,7 @@ const Conversations = () => {
                 throw new Error('Failed to fetch chats');
             }
             const resData = await res.json();
-            console.log("resData in fetchAllChats:", resData);
+            // console.log("resData in fetchAllChats:", resData);
             const decryptedConvos = await decryptAllConversations(resData.data);
 
             const allConvo = decryptedConvos.map(convo => {
@@ -166,7 +166,7 @@ const Conversations = () => {
 
             // setConvoList(allConvo); // update state
             dispatch(setConvos({allConvo, userId}));
-            console.log("convo list: ", allConvo)
+            // console.log("convo list: ", allConvo)
         } catch (error) {
             setError(true)
             console.error("Error fetching convos", error)
@@ -272,8 +272,8 @@ const Conversations = () => {
       <section style={{ width: `${width}%`}} className="h-[99vh] min-w-56 ml-2 mr-1 border border-slate-400 rounded-lg transition-all md:max-w-1/2 overflow-hidden">
         <div className='w-full mx-auto border-b border-slate-400 py-4 px-2 flex gap-2 justify-center' >
             <div className="w-[95%] h-10 rounded-lg border border-slate-500 flex items-center px-3 gap-2 bg-slate-300/50 dark:bg-[#1a1a1a]">
-                <HiOutlineDocumentSearch className="text-xl text-gray-800 dark:text-gray-300" />
-                <input type="text" placeholder="Search here" value={search} onChange={(e)=>setSearch(e.target.value)} className="flex-1 outline-none text-sm bg-transparent placeholder-gray-800 dark:placeholder-gray-400 " />
+                <HiOutlineDocumentSearch className="min-w-6 text-xl text-gray-800 dark:text-gray-300" />
+                <input type="text" placeholder="Search here" value={search} onChange={(e)=>setSearch(e.target.value)} className="w-full flex-1 bg-transparent outline-none text-sm  placeholder-gray-800 dark:placeholder-gray-400 " />
             </div>
             {/* <span className='text-2xl tracking-widest font-bold'>Sanyug</span> */}
             <button onClick={()=>setConvoDropdown((prev)=>!prev)} className='max-[425px]:block hidden px-2 bg-transparent rounded-lg transition-colors'>
@@ -291,11 +291,11 @@ const Conversations = () => {
                             <div className='flex items-center gap-2 justify-center animate-pulse'>
                                 <div className='w-12 h-12 rounded-lg bg-gray-500 animate-pulse'/>
                                 <div className='flex flex-col gap-2'>
-                                    <p className='text-lg font-lg h-4 w-28 bg-gray-500 animate-pulse'></p>
+                                    <p className='text-lg font-lg h-3 w-24 bg-gray-500 animate-pulse'></p>
                                     <span className='opacity-90 h-2 w-16 bg-gray-500 animate-bounce '></span>
                                 </div>
                             </div>
-                            <div className='opacity-90 font-sm text-xs w-12 h-4 bg-gray-500 animate-bounce'></div>
+                            <div className='opacity-90 font-sm text-xs w-10 h-3 bg-gray-500 animate-bounce'></div>
                         </div>
                     </div>    
                 )})
@@ -307,10 +307,10 @@ const Conversations = () => {
                         <button key={index} onClick={()=>displayMessage(index)} className={`h-18 my-auto cursor-pointer border-b border-slate-400 hover:bg-gray-300 dark:hover:bg-gray-500/75 ${activeConvoId===data.convoId ? 'bg-gray-400/75 dark:bg-gray-600 text-black dark:text-white':''}`}>
                             <div className='w-full flex items-center justify-between px-2 '>
                                 <div className='w-full flex items-center gap-2 justify-center'>
-                                    <img src={data.profilePic ? data.profilePic?.lowResPic : dummyDp} alt={data?.name} className='w-12 h-12 rounded-lg object-cover'/>
+                                    <img src={data.profilePic ? data.profilePic?.lowResPic : dummyDp} alt={data?.name} className='min-w-12 h-12 rounded-lg object-cover'/>
                                     <div className='w-full flex flex-col items-start'>
                                         <div className='w-full flex items-center justify-between'>
-                                            <p className='text-lg font-lg capitalize'>{data?.name}</p>
+                                            <p className='text-lg font-lg capitalize text-nowrap overflow-hidden'>{data?.name}</p>
                                             <span className='opacity-90 font-sm text-xs'>{data?.lastSeen}</span>
                                         </div>
                                         <div className='w-full flex items-center justify-between'>
