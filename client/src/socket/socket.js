@@ -8,7 +8,8 @@ export const connectSocket = () => {
   }
   
   const authToken = localStorage.getItem("authToken");
-  const backendUrl = 'http://localhost:8080'
+  // const backendUrl = 'http://localhost:8080'
+  const backendUrl = 'https://sanyug-server.onrender.com'
 
   socket = io(backendUrl, {
     transports: ["websocket"],
