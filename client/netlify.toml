@@ -2,8 +2,8 @@
 # Netlify Build Settings
 # -----------------------
 [build]
-  publish = "build"      # Folder where your frontend build is output (React default)
-  command = "npm run build"
+  publish = "dist"      # Folder where your frontend build is output (React default)
+  command = "npm install && npm run build"
 
 # -----------------------
 # Redirects / SPA Fallback
