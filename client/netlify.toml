@@ -2,30 +2,31 @@
 # Netlify Build Settings
 # -----------------------
 [build]
-  publish = "dist"      # Folder where your frontend build is output (React default)
-  command = "npm install && npm run build"
+  base    = "client"                       # your React frontend folder
+  publish = "dist"                         # Vite outputs production files here
+  command = "npm install && npm run build" # install deps and build
 
 # -----------------------
-# Redirects / SPA Fallback
+# SPA Fallback for React Router
 # -----------------------
 [[redirects]]
-  # Redirect all frontend routes to index.html (for SPA)
   from = "/*"
   to = "/index.html"
   status = 200
   force = true
+  conditions = { "!file" = true }  # only redirect if the file does not exist
 
 # -----------------------
-# API Proxy
+# API Proxy (if you have a backend)
 # -----------------------
 [[redirects]]
   from = "/api/*"
-  to = "https://your-backend-domain.com/:splat"
+  to = "https://sanyug-server.onrender.com/:splat"
   status = 200
   force = true
 
 # -----------------------
-# Security Headers
+# Security Headers + CSP
 # -----------------------
 [[headers]]
   for = "/*"
@@ -34,4 +35,12 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer-when-downgrade"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
-    Content-Security-Policy = "default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self';"
+    # Allow Google Sign-In scripts and styles
+    Content-Security-Policy = """
+      default-src 'self';
+      script-src 'self' https://accounts.google.com https://apis.google.com;
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' data:;
+      connect-src 'self' https://accounts.google.com https://apis.google.com;
+      font-src 'self';
+    """
