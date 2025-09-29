@@ -41,6 +41,6 @@
       script-src 'self' https://accounts.google.com https://apis.google.com;
       style-src 'self' 'unsafe-inline';
       img-src 'self' data:;
-      connect-src 'self' https://accounts.google.com https://apis.google.com;
+      connect-src 'self' https://accounts.google.com https://apis.google.com https://sanyug-server.onrender.com;
       font-src 'self';
     """
