@@ -24,12 +24,6 @@ const conversationSchema = new mongoose.Schema({
         type: mongoose.Types.ObjectId,
         ref: 'User'
     }],
-    // lastMessage: {
-    //     _id: { type:mongoose.Types.ObjectId, ref:'Message'},
-    //     text: { type: String },
-    //     sender: { type: mongoose.Types.ObjectId, ref: 'User' },
-    //     createdAt: { type: Date, default: Date.now }
-    // }
 }, {timestamps: true})
 
 const conversationModel = mongoose.model('Conversation', conversationSchema)

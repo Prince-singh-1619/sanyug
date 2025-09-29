@@ -5,10 +5,8 @@ import {toast} from 'react-toastify'
 import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
 import GoogleLogin from "../components/GoogleLogin";
-import { connectSocket } from "../socket/socket";
 import { setAuthToken, setUserData } from "../redux/slices/userSlice";
 import { useDispatch } from "react-redux";
-// import { Link, useNavigate } from 'react-router-dom'
 
 const Register = () => {
   const [form, setForm] = useState({
@@ -41,8 +39,7 @@ const Register = () => {
     const err = {};
     if (!form.firstName) err.firstName = "First name required";
     if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) err.email = "Valid email required";
-    // if (!form.username) err.username = "Username required";
-    // if (form.password.length < 8) err.password = "Min 8 characters required";
+    if (form.password.length < 8) err.password = "Min 8 characters required";
     if (form.password !== form.confirmPassword) err.confirmPassword = "Passwords don't match";
     if (!otpVerified) err.otp = "OTP not verified";
     return err;
@@ -151,10 +148,8 @@ const Register = () => {
         toast.success(data.message)
         
         localStorage.setItem("authToken", data.token);
-        // localStorage.setItem("userData", JSON.stringify(data.user));
         dispatch(setAuthToken({authToken:data.token}))
         dispatch(setUserData({userData:data.user}))
-        // connectSocket(data.token);
         
         navigate("/")
       }
@@ -235,14 +230,7 @@ const Register = () => {
                 ) : (
                   <span className="btn-disabled text-center">Create Account</span>
                 ) 
-              }
-              {/* <button 
-                className={`btn ${!otpVerified ? 'btn-disabled cursor-not-allowed' : ''}`} 
-                disabled={!otpVerified}
-              >
-                Create Account
-              </button> */}
-              
+              }  
           </form>
 
           <span>Already have an account?  

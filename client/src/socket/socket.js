@@ -1,4 +1,3 @@
-// import { useSelector } from "react-redux";
 import { io } from "socket.io-client";
 
 let socket;
@@ -9,19 +8,45 @@ export const connectSocket = () => {
   }
   
   const authToken = localStorage.getItem("authToken");
-  // const { authToken } = useSelector(state => state.user)
-  // console.log("authToken in socket", authToken)
   const backendUrl = 'http://localhost:8080'
 
-  // if(socket){
-    socket = io(backendUrl, {
-      transports: ["websocket"],
-      // withCredentials: true,
-      auth: {
-        token: authToken,  
-      },
-    });
-  // }
+  socket = io(backendUrl, {
+    transports: ["websocket"],
+    // withCredentials: true,
+    auth: {
+      token: authToken,  
+    },
+  });
+
+  let pingInterval, pongCheckInterval;
+
+  // Heartbeat: send ping every 10s
+  pingInterval = setInterval(() => {
+    if (socket.connected) {
+      socket.emit("ping");
+    }
+  }, 10000); // 10 seconds
+
+  let lastPong = Date.now();
+  // Listen for pong from server
+  socket.on("pong", () => {
+    console.log("Server is alive (pong received)");
+    lastPong = Date.now(); // update timestamp
+  });
+
+  // Check every 15s if pong is missing
+  pongCheckInterval = setInterval(() => {
+    if (Date.now() - lastPong > 15000) {
+      console.warn("No pong received, reconnecting...");
+      socket.disconnect();
+      socket.connect();
+    }
+  }, 15000);
+
+  socket.on("disconnect", () => {
+    clearInterval(pingInterval);
+    clearInterval(pongCheckInterval);
+  });
 
   return socket;
 };

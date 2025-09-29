@@ -27,24 +27,9 @@ async function loginController(req, res){
         const tokenData = { userId: user._id }
         const token = jwt.sign(tokenData, process.env.TOKEN_SECRET_KEY, {expiresIn: 60*60*24*7})
 
-        // const { _id, password: _, __v, ...rest } = user;
-
         res.status(200).json({
             message: "Login successful",
             token,
-            // user: {
-            //     userId: user._id,
-            //     firstName: user.firstName,
-            //     lastName: user.lastName,
-            //     username: user.username,
-            //     email: user.email,
-            //     profilePic: user.profilePic,
-            //     isVerified: user.isVerified,
-            //     lastSeen: user.lastSeen,
-            //     createdAt: user.createdAt,
-            //     updatedAt: user.updatedAt
-            // },
-            // user: { userId: _id, ...rest._doc },
             user,
             success: true,
             error: false

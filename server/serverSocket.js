@@ -9,7 +9,6 @@ async function updateUserLastSeen(userId) {
       { lastSeen: new Date() },
       { new: true } // returns updated doc if you ever need it
     );
-    // console.log(`Last seen updated for user ${userId}`);
   } catch (error) {
     // console.error(`Failed to update last seen for ${userId}:`, error.message);
   }
@@ -44,18 +43,13 @@ function serverSocketHandler(io){
         socket.emit("all-online-users", [...onlineUsers.keys()])
       })
 
-      // // console.log("socket.activeParticipants", socket.activeParticipants, "socket.activeConvoId", socket.activeConvoId)
-      // if(socket.activeParticipants && socket.activeConvoId){
-      //   socket.activeParticipants.forEach(memberId => {
-      //     if(memberId.toString() !== userId){
-      //       io.to(memberId.toString()).emit("participant-joined-active", { activeConvoId_otherSide:socket.activeConvoId, sender:userId });
-      //       console.log("participant-joined-active (connected)", socket.activeConvoId);
-      //     }
-      //   })
-      // }
-  
       // optional: let frontend know connection is good
       socket.emit("connected", { userId });
+
+      // Listen for ping from client
+      socket.on("ping", () => {
+        socket.emit("pong"); // reply with pong
+      });
   
       socket.on("user_logout", async({userId})=>{
         await updateUserLastSeen(userId);
@@ -69,22 +63,17 @@ function serverSocketHandler(io){
         await updateUserLastSeen(userId);
         // console.log(`User ${userId} disconnected`);
         // console.log("socket.activeParticipants", socket.activeParticipants, "socket.activeConvoId", socket.activeConvoId)
-        if(socket.activeParticipants && socket.activeConvoId){
-          socket.activeParticipants.forEach(memberId => {
-            if(memberId.toString() !== userId){
-              io.to(memberId.toString()).emit("participant-left-active", { activeConvoId_otherSide:null, sender:userId });
-              console.log("participant-left-active (disconnect)", socket.activeConvoId);
-            }
-          })
-        }
-  
-        socket.activeConvoId = null;
-        socket.activeParticipants = [];
-  
-        // if(userId) {  
-        //   io.emit("user_disconnected", { userId });
-        //   // updateUserLastSeen(userId);
+        // if(socket.activeParticipants && socket.activeConvoId){
+        //   socket.activeParticipants.forEach(memberId => {
+        //     if(memberId.toString() !== userId){
+        //       io.to(memberId.toString()).emit("participant-left-active", { activeConvoId_otherSide:null, sender:userId });
+        //       console.log("participant-left-active (disconnect)", socket.activeConvoId);
+        //     }
+        //   })
         // }
+  
+        // socket.activeConvoId = null;
+        // socket.activeParticipants = [];
       });
     } 
     catch (err) {
@@ -106,7 +95,6 @@ function serverSocketHandler(io){
     socket.on("message-delivered", async ({msgId, sender, receiver, activeConvoId})=>{
       try {
         await messageModel.updateOne(
-          // {_id:msgId, sender, deliveredTo:{$ne: receiver }},
           {_id:msgId},
           {$addToSet: { deliveredTo: receiver } }
         )
@@ -114,7 +102,6 @@ function serverSocketHandler(io){
         console.log("Error updating deliveredTo in DB by WS")
       }
       console.log("message-delivered received at server", msgId, receiver, activeConvoId)
-      // socket.emit("message-delivery-confirmed", { msgId, receiver });
       io.to(sender).emit("message-delivery-confirmed", ({ msgId, receiver }))
     })
 
@@ -122,10 +109,6 @@ function serverSocketHandler(io){
     socket.on("message-read", async ({convoId, reader, sender})=>{
       console.log("message-read received in serverSocket")
       try {
-        // await messageModel.updateMany(
-        //   {conversationId:convoId, readBy:{$ne: reader}},
-        //   {$addToSet: {readBy: reader}}
-        // );
         await messageModel.updateMany(
           {conversationId: convoId, sender},
           {$addToSet: {readBy: reader}}
@@ -138,39 +121,6 @@ function serverSocketHandler(io){
         console.log("reader:", reader, ", convoId:", convoId)
       })
     })
-  
-    // receiving activeConvoId from any participant
-    // socket.on("active-convo-id", ({sender, activeConvoId, prevParticipants, activeParticipants})=>{
-    //   // console.log("active-convo-id received at server", activeConvoId, sender, prevParticipants, activeParticipants)
-    //   socket.activeConvoId = activeConvoId || null; // store activeConvoId in socket session
-    //   socket.activeParticipants = activeParticipants || []; // store activeParticipants in socket session
-  
-    //   if (!activeConvoId) {
-    //     // convo closed -> notify prevParticipants
-    //     prevParticipants.forEach(memberId => {
-    //       if (memberId.toString() !== sender) {
-    //         io.to(memberId.toString()).emit("participant-left-active", { activeConvoId_otherSide: null, sender });
-    //         console.log("participant-left-active (null convo)", null);
-    //       }
-    //     });
-    //     return;
-    //   }
-  
-    //   // inform all other participants about this change
-    //   prevParticipants.forEach(memberId => {
-    //     if (memberId.toString() !== sender) {
-    //       io.to(memberId.toString()).emit("participant-left-active", { activeConvoId_otherSide:activeConvoId, sender });
-    //       console.log("participant-left-active", activeConvoId);
-    //       updateUserLastSeen(memberId);
-    //     }
-    //   });
-    //   activeParticipants.forEach(memberId => {
-    //     if (memberId.toString() !== sender) {
-    //       io.to(memberId.toString()).emit("participant-joined-active", { activeConvoId_otherSide:activeConvoId, sender });
-    //       console.log("participant-joined-active", activeConvoId);
-    //     }
-    //   });
-    // })
   
     // receiving typing indicator from participant
     socket.on("typing", ({sender, convoId, receivers})=>{

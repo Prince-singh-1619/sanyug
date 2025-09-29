@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { disconnectSocket, getSocket } from '../socket/socket'
@@ -20,7 +20,6 @@ const MyProfile = () => {
     const dispatch = useDispatch()
     const socket = getSocket()
 
-    // const userData = JSON.parse(localStorage.getItem("userData")) || {};
     const { authToken, userData } = useSelector(state => state.user)
     const userId = userData?._id;
 
@@ -28,7 +27,6 @@ const MyProfile = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [isImagePopup, setIsImagePopup] = useState(false);
-    // const [user, setFormData] = useState(user);
 
     const handleChange = (e) => {
       setUser({ ...user, [e.target.name]: e.target.value });
@@ -67,9 +65,6 @@ const MyProfile = () => {
         console.log(error)
       }
     }
-    // const removeFromCloudinary = async(media)=>{
-
-    // }
 
     const handleUploadPic = async (e) => {
       const file = e.target.files[0]
@@ -104,22 +99,17 @@ const MyProfile = () => {
       })
     }
 
-    // useEffect(() => {
-    //   console.log("user updated:", user);
-    // }, [user]);
-
     const handleLogout = () =>{
-        if(socket){
-          socket.emit("user_logout", {userId});
-          disconnectSocket();
-          dispatch(clearChatState());
-          dispatch(clearConvoState());
-        }
-        // localStorage.removeItem("userData")
-        localStorage.removeItem("authToken")
-        dispatch(clearUserData());
-        toast.success("Logged out successfully")
-        navigate('/login')
+      if(socket){
+        socket.emit("user_logout", {userId});
+        disconnectSocket();
+        dispatch(clearChatState());
+        dispatch(clearConvoState());
+      }
+      localStorage.removeItem("authToken")
+      dispatch(clearUserData());
+      toast.success("Logged out successfully")
+      navigate('/login')
     }
 
     const handleSubmit = async(e) =>{
@@ -198,7 +188,7 @@ const MyProfile = () => {
       <div className="relative h-fit min-w-1/2 max-w[90%] flex flex-col items-center p-8 mt-8 max-w-2xl mx-auto bg-slate-300 dark:bg-[#151515] shadow-xl rounded-lg">
         {/* Profile Picture */}
         <div className="relative group">
-          <img src={(isEditing ? (user.profilePic?.highResPic||user.profilePic?.lowResPic) : (userData.profilePic?.highResPic||userData.profilePic?.lowResPic)) || dummyDp} alt="Profile" onClick={()=>!isEditing && setIsImagePopup(true)} className={`w-32 h-32 mx-auto rounded-xl border-4 border-slate-500 shadow-lg object-cover ${!isEditing && user.profilePic?.highResPic ? 'cursor-pointer':''} `} />
+          <img src={(isEditing ? (user.profilePic?.highResPic||user.profilePic?.lowResPic) : (userData.profilePic?.highResPic||userData.profilePic?.lowResPic)) || dummyDp} alt="Profile" onClick={()=>!isEditing && setIsImagePopup(true)} className={`w-32 h-32 mx-auto rounded-xl border-4 border-slate-500 shadow-lg object-cover lazy-loading ${!isEditing && user.profilePic?.highResPic ? 'cursor-pointer':''} `} />
           {isEditing && (
             <div>
               <input id='upload-pic' type='file' name='profilePic' accept="image/*" className='hidden' onChange={handleUploadPic}/>
@@ -254,10 +244,6 @@ const MyProfile = () => {
                   <span className='opacity-85'>Status:</span>
                   <p className="text-lg max-[425px]:text-md font-semibold break-all">{userData.status}</p>
               </div>
-              {/* <div className='flex items-center justify-start gap-2'>
-                  <span className='opacity-85'>Last Seen at:</span>
-                  <p className="text-lg font-semibold">{formatTimestamp(userData.lastSeen)}</p>
-              </div> */}
               <div className='flex items-center justify-start gap-2'>
                   <span className='opacity-85'>Using since:</span>
                   <p className="text-lg max-[425px]:text-md font-semibold">{formatDate(userData.createdAt)}</p>
@@ -287,9 +273,6 @@ const MyProfile = () => {
               <button onClick={() => setIsEditing(true)} className="h-10 flex items-center gap-2 bg-blue-400 dark:bg-blue-700 px-5 py-2 rounded-lg shadow-md " >
                 <FaEdit /> Edit Profile
               </button>
-              {/* <button onClick={() => alert("Change password flow")} className="flex items-center gap-2 bg-yellow-400 dark:bg-yellow-600 px-5 py-2 rounded-lg shadow-md " >
-                <FaLock /> Change Password
-              </button> */}
               <button onClick={handleLogout} className="h-10 flex items-center gap-2 bg-red-400 dark:bg-red-600 px-5 py-2 rounded-lg shadow-md " >
                 <FaSignOutAlt /> Logout
               </button>

@@ -8,7 +8,8 @@ const connectDB = async() =>{
             useNewUrlParser: true,
             useUnifiedTopology: true,
             ssl: true,
-            tlsAllowInvalidCertificates: false
+            tlsAllowInvalidCertificates: false,
+            maxPoolSize: 10
         })
         console.log("MongoDB connected")
     } catch (err) {

@@ -1,0 +1,37 @@
+# -----------------------
+# Netlify Build Settings
+# -----------------------
+[build]
+  publish = "build"      # Folder where your frontend build is output (React default)
+  command = "npm run build"
+
+# -----------------------
+# Redirects / SPA Fallback
+# -----------------------
+[[redirects]]
+  # Redirect all frontend routes to index.html (for SPA)
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = true
+
+# -----------------------
+# API Proxy
+# -----------------------
+[[redirects]]
+  from = "/api/*"
+  to = "https://your-backend-domain.com/:splat"
+  status = 200
+  force = true
+
+# -----------------------
+# Security Headers
+# -----------------------
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer-when-downgrade"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    Content-Security-Policy = "default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self';"

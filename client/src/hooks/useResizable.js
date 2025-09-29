@@ -5,7 +5,6 @@ import { setLeftPanelWidth } from "../redux/slices/settingSlice";
 export default function useResizable(initialWidth = 25, min = 20, max = 50) {
   const dispatch = useDispatch()
 
-  // const savedWidth = localStorage.getItem("leftPanelWidth"); // read once
   const { leftPanelWidth } = useSelector(state => state.settings)
   const savedWidth = leftPanelWidth
 
@@ -16,7 +15,6 @@ export default function useResizable(initialWidth = 25, min = 20, max = 50) {
 
   // Sync width state with localStorage + ref
   useEffect(() => {
-    // localStorage.setItem("leftPanelWidth", width);
     dispatch(setLeftPanelWidth({ newWidth:leftPanelWidth }))
     widthRef.current = width;
   }, [width]);
@@ -50,7 +48,6 @@ export default function useResizable(initialWidth = 25, min = 20, max = 50) {
         setWidth(100); // force full width
       } else {
         // restore from saved value or fallback to initialWidth
-        // const saved = localStorage.getItem("leftPanelWidth");
         const saved = leftPanelWidth;
         setWidth(saved ? parseFloat(saved) : initialWidth);
       }

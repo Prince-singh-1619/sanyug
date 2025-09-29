@@ -54,7 +54,7 @@ const ImagePopup = ({url, lowRes, isOpen, onClose}) => {
   return (
     <section className='fixed inset-0 backdrop-blur-xs w-full h-full flex justify-center items-center z-50' >
         <div ref={dialogRef} className='w-fit min-md:min-w-100 max-md:w-[85%] h-fit p-2 bg-transparent rounded-xl shadow-lg relative'>
-            <img src={highRes || dummyDp} alt='user Dp' className='h-full w-full object-cover'/>
+            <img src={highRes || dummyDp} alt='user Dp' className='h-full w-full object-cover lazy-loading'/>
             {loading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-xl">
                     <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin"></div>

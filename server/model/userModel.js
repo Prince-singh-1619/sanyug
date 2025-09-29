@@ -40,7 +40,6 @@ const userSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        // enum: ["online", "offline"],
         default: "Hello, I'm on Sanyug"
     },
     lastSeen: {

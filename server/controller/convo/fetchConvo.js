@@ -4,14 +4,12 @@ const messageModel = require("../../model/messageModel")
 async function fetchConvoController(req, res){
     try {
         const {userId} = req.query
-        // console.log("fetchConvoController called with userId:", userId);
         if(!userId) throw new Error('userId is required')
 
         const convoData = await conversationModel
             .find({participants: userId})
             .populate({
                 path: 'participants',
-                // select: '_id firstName lastName profilePic lastSeen'
                 select: '_id firstName lastName username profilePic isVerified status lastSeen createdAt'
             })
             .sort({updatedAt: -1}) // Most recent first
@@ -33,15 +31,12 @@ async function fetchConvoController(req, res){
             }),
         )
 
-        // fullConvoData = {...fullConvoData, unreadCount}
-        
         const convoIds = convoData.map(c=>c._id) // reusable for updateMany
 
         if(convoIds.length > 0){
             await messageModel.updateMany(
                 { 
                     conversationId: {
-                        // $in: await conversationModel.find({ participants:userId}).distinct("_id")
                         $in: convoIds
                     },
                     sender: { $ne: userId },    // don’t deliver your own messages

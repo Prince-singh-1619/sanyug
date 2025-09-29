@@ -56,15 +56,12 @@ const Login = () => {
             const data = await res.json()
             if(data.success && data.token && data.user) {
                 console.log("dataApi message from success: ", data.message)
-                // socket.emit("join", data.user._id) // join user room for socket
 
                 localStorage.setItem("authToken", data.token);
-                // localStorage.setItem("userData", JSON.stringify(data.user));
 
                 dispatch(setAuthToken({authToken:data.token}))
                 dispatch(setUserData({userData:data.user}))
                 console.log("dispatch called...........")
-                // connectSocket(data.token);
 
                 toast.success(data.message)
                 navigate("/")

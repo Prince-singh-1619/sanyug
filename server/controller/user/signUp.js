@@ -23,7 +23,7 @@ async function signUpController(req, res){
         //hashing password
         const salt = bcrypt.genSaltSync(10)
         const hashedPassword = bcrypt.hashSync(password, salt)
-        // if(!hashedPassword) throw new Error("Something went wrong in hashed password")
+        if(!hashedPassword) throw new Error("Something went wrong in hashed password")
 
         const payload = {
             firstName,
@@ -38,7 +38,6 @@ async function signUpController(req, res){
         const newUser = new userModel(payload)
         const saveUser = await newUser.save()
 
-        // if (!process.env.TOKEN_SECRET_KEY) throw new Error("Token secret key not set in environment");
         const tokenPayload = { userId: saveUser._id }
         const token = jwt.sign(tokenPayload, process.env.TOKEN_SECRET_KEY, {expiresIn: 60*60*24*7})
         
@@ -47,16 +46,6 @@ async function signUpController(req, res){
         res.status(201).json({
             message: "User created successfully",
             token,
-            // user: userWithoutPassword,
-            // user: {
-            //     userId: userWithoutPassword._id,
-            //     firstName: userWithoutPassword.firstName,
-            //     lastName: userWithoutPassword.lastName,
-            //     username: userWithoutPassword.username,
-            //     email: userWithoutPassword.email,
-            //     profilePic: userWithoutPassword.profilePic,
-            // },
-            // user: { userId: _id, ...userWithoutPassword._doc },
             user,
             success: true, 
             error: false,

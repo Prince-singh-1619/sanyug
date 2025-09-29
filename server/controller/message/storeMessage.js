@@ -27,21 +27,6 @@ async function storeMessageController(req, res){
         })
         const store = await newMessage.save()
 
-        // Update conversation's lastMessage
-        // await conversationModel.findByIdAndUpdate(
-        //     convoId,
-        //     {
-        //         $set: {
-        //             "lastMessage.msgId": store._id,
-        //             "lastMessage.text": text,
-        //             "lastMessage.sender": sender
-        //         }
-        //     },
-        //     { new: true }
-        // );
-
-
-        // const conversation = await conversationModel.findById(convoId).select("participants");
         // Emit via socket.io (attach io to req in app.js)
         conversation.participants.forEach(memberId => {
             if (memberId.toString() !== sender.toString()) {
@@ -49,9 +34,6 @@ async function storeMessageController(req, res){
                 console.log("message saved successfully", store);
             }
         });
-        // Confirm to sender as "sent"
-        // socket.emit("message-sent", store._id);
-
 
         return res.status(200).json({
             message: "Message stored successfully",

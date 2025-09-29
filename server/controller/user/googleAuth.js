@@ -47,15 +47,6 @@ async function googleAuthController(req, res) {
 
         res.json({ 
             token, 
-            // user: {
-            //     userId: user._id,
-            //     firstName: user.firstName,
-            //     lastName: user.lastName,
-            //     username: user.username,
-            //     email: user.email,
-            //     profilePic: user.profilePic,
-            // },
-            // user: { userId: _id, ...rest._doc },
             user,
         });
     } catch (err) {

@@ -3,11 +3,11 @@ import { createSlice } from "@reduxjs/toolkit"
 const initialState = {
     convoList: [], // here convoList is an array, ___________NOT an OBJECT__________
     activeConvoId: null, // || window.href,
-    prevConvoId: null,
+    // prevConvoId: null,
     convoUserTyping: {},
 
-    prevParticipants:[],
-    activeParticipants:[],
+    // prevParticipants:[],
+    // activeParticipants:[],
 }
 
 const convoSlice = createSlice({
@@ -15,13 +15,13 @@ const convoSlice = createSlice({
     initialState, 
     reducers:{
         setActiveConvo: (state, action) =>{
-            const { newConvoId, participants } = action.payload;
+            const { newConvoId } = action.payload;
             // shift current active to prev
-            state.prevConvoId = state.activeConvoId;
-            state.prevParticipants = state.activeParticipants;
+            // state.prevConvoId = state.activeConvoId;
+            // state.prevParticipants = state.activeParticipants;
             // update active convo & participants
             state.activeConvoId = newConvoId;
-            state.activeParticipants = participants;
+            // state.activeParticipants = participants;
         },
         setConvos: (state, action)=> {
             const { allConvo, userId } = action.payload;
@@ -35,8 +35,7 @@ const convoSlice = createSlice({
                     }
                 })
             })
-            state.activeParticipants = allOtherParticipants
-            // console.log("allOtherParticipants", allOtherParticipants)
+            // state.activeParticipants = allOtherParticipants
         },
         addNewConvo: (state, action)=>{
             const { newConvo } = action.payload;
@@ -71,14 +70,9 @@ const convoSlice = createSlice({
             } 
             console.log("setLastMessage:", convo);
             console.log("Before update lastMsg:", state.convoList);
-            // state.convoList[convoId].lastMessage = msg;
-
         },
         updateLastTempMsgId :(state, action)=>{
             const { convoId, tempId, newId } = action.payload;
-            // console.log("updateTempMsgId called with:", { convoId, tempId, newId });
-            // console.log("Before update:", state.messageList[convoId]);
-            // console.log("Before update lastMsg:", state.convoList);
             console.log("convoid received", convoId);
             const convo = state.convoList.find(c=> c.convoId===convoId);
             if(convo && convo.lastMsg && convo.lastMsg._id === tempId){
@@ -86,7 +80,7 @@ const convoSlice = createSlice({
             }
         },
         markLastMsgDelivered: (state, action)=>{
-            const { msgId, receiver, activeConvoId_otherSide } = action.payload;
+            const { msgId, receiver } = action.payload;
             const convo = state.convoList.find(c => c.lastMsg && c.lastMsg._id === msgId);
             if (!convo || !convo.lastMsg) return;
 
@@ -106,19 +100,6 @@ const convoSlice = createSlice({
                 // }
             }
         },
-        // markLastMsgRead: (state, action)=>{
-        //     const { activeConvoId_otherSide, sender } = action.payload
-        //     const convo = state.convoList.find(c=> c.convoId===activeConvoId_otherSide)
-        //     if(!convo || !convo.lastMsg) return;
-
-        //     const msg = convo.lastMsg
-        //     if(!msg.readBy) msg.readBy = [];
-
-        //     // add receiver if not present
-        //     if(!msg.readBy.includes(sender)){
-        //         msg.readBy.push(sender)
-        //     }
-        // },
         markLastMsgRead: (state, action)=>{
             const { reader, convoId } = action.payload
             const convo = state.convoList.find(c=> c.convoId===convoId)
@@ -159,10 +140,10 @@ const convoSlice = createSlice({
         clearConvoState: (state) =>{
             state.convoList = [] 
             state.activeConvoId = null 
-            state.prevConvoId = null
+            // state.prevConvoId = null
             state.convoUserTyping = {}
-            state.prevParticipants = []
-            state.activeParticipants = []
+            // state.prevParticipants = []
+            // state.activeParticipants = []
         }
     }
 });

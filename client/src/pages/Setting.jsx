@@ -1,10 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
-// import { useState } from "react";
-// import { Switch } from "@/components/ui/switch";
-// import { Card, CardContent } from "@/components/ui/card";
-// import { Button } from "@/components/ui/button";
-// import sentSound from '../assets/notify 2.mp3'
 import { setChatBgWallpaper, setIsDefaultBg, setIsSound } from '../redux/slices/settingSlice'
 import Sidebar from '../components/Sidebar';
 import { useNavigate } from 'react-router-dom';
@@ -13,12 +8,6 @@ import defaultDoodleBg from '../assets/1.png'
 import ImageToBase64 from '../helpers/ImageToBase64';
 
 const Setting = () => {
-  // const [soundEnabled, setSoundEnabled] = useState(true);
-  // const [darkMode, setDarkMode] = useState(false);
-  // const [showOnline, setShowOnline] = useState(true);
-  // const [readReceipts, setReadReceipts] = useState(true);
-  // const [notifyMessages, setNotifyMessages] = useState(true);
-  // const [notifyGroups, setNotifyGroups] = useState(false);
   const [customLoading, setCustomLoading] = useState(false)
   const [defaultLoading, setDefaultLoading] = useState(false)
   const dispatch = useDispatch()
@@ -113,7 +102,7 @@ const Setting = () => {
             <label htmlFor='bg-wallpaper' className='min-w-34 h-10 px-4 py-2 bg-green-500 dark:bg-green-600 text-black dark:text-[#dadada] rounded-sm cursor-pointer flex items-center justify-center'>
               { customLoading ? (<div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>) : (<span>Select from file</span>) }
             </label>
-            <img src={isDefaultBg ? defaultDoodleBg : chatBgWallpaper} alt='chat Bg wallpaper' className={`w-36 h-36 object-cover border rounded-lg ${isDefaultBg ? 'invert-100 dark:invert-0' : ''}`}/>
+            <img src={isDefaultBg ? defaultDoodleBg : chatBgWallpaper} alt='chat Bg wallpaper' className={`w-36 h-36 object-cover lazy-loading border rounded-lg ${isDefaultBg ? 'invert-100 dark:invert-0' : ''}`}/>
             <button onClick={handleDefault} className="min-w-30 h-10 px-4 py-2  bg-blue-500 dark:bg-blue-600 text-black dark:text-[#dadada] rounded-sm text-nowrap flex items-center justify-center" >
               { defaultLoading ? (<div className="w-5 h-5 text-center border-2 border-white  border-t-transparent rounded-full animate-spin"></div>) : ("Keep default") }
             </button>

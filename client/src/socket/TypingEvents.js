@@ -10,9 +10,6 @@ const socket = getSocket();
 const TypingEvents = () => {
     const dispatch = useDispatch()
 
-    // const userData = JSON.parse(localStorage.getItem("userData"));
-    // const userId = userData?._id;
-
     useEffect(()=>{
         socket.on("typing", ({sender, convoId})=>{
             dispatch(convoTypingUser({ sender, convoId, isTyping:true }));

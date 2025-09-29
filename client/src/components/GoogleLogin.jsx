@@ -21,20 +21,15 @@ const GoogleLogin = () => {
 
     useEffect(() => {
         // Function to check if Google SDK is loaded
-        // console.log("useEffect 0")
         const checkGoogleSDK = () => {
-            // console.log("useEffect 1")
             if (window.google && window.google.accounts && window.google.accounts.id) {
-                // console.log("useEffect 2")
                 setIsGoogleSDKReady(true);
                 initializeGoogleAuth();
             } else {
                 // Retry after a short delay
                 setTimeout(checkGoogleSDK, 100);
-                // console.log("useEffect 3")
             }
         };
-        // console.log("useEffect 4")
 
         // Start checking for Google SDK
         checkGoogleSDK();
@@ -106,13 +101,9 @@ const GoogleLogin = () => {
             console.log("Google auth response:", data);
 
             if (data.token && data.user) {
-                // socket.emit("join", data.user.userId) // join user room for socket
-                // Store JWT token and user data in localStorage
                 localStorage.setItem("authToken", data.token);
-                // localStorage.setItem("userData", JSON.stringify(data.user));
                 dispatch(setAuthToken({authToken:data.token}))
                 dispatch(setUserData({userData:data.user}))
-                // connectSocket(data.token);
                 
                 toast.success("Successfully logged in with Google!");
                 navigate(from, { replace: true });

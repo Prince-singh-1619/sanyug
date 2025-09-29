@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react'
 import { useState } from "react";
-// import { CheckCircle } from "lucide-react"; // verification icon
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useSelector } from 'react-redux';
@@ -8,16 +7,11 @@ dayjs.extend(relativeTime);
 import dummyDp from '../assets/person-dummy.svg'
 import { MdClose, MdVerifiedUser } from 'react-icons/md';
 import ImagePopup from './ImagePopup';
-// import { useNavigate } from 'react-router-dom';
 
 const NextUserProfile = ({ user, isOpen, onClose}) => {
     const { userData } = useSelector(state => state.user)
     const userId = userData?._id
     const otherUser = user.participants.find(p => p._id !== userId);
-    // const user = user
-    // const isOpen = true
-    // const onClose = false
-    // const navigate = useNavigate()
 
     const [isImagePopup, setIsImagePopup] = useState(false)
 
@@ -40,10 +34,8 @@ const NextUserProfile = ({ user, isOpen, onClose}) => {
         const today = stripTime(now);
         const yesterday = new Date(today);
         yesterday.setDate(today.getDate() - 1);
-        // const messageDate = stripTime(date);
 
-        // if (messageDate.getTime() === today.getTime()) {
-        // Today → show time
+        // Today -> show time
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         // }
     }
@@ -72,12 +64,11 @@ const NextUserProfile = ({ user, isOpen, onClose}) => {
         <div ref={dialogRef} className="relative h-fit w-1/2 max-md:w-full max-[425px]:w-full flex flex-col items-center py-4 mt-8 mx-auto bg-slate-300 dark:bg-[#151515] shadow-xl rounded-lg">
             {/* Profile Picture */}
             <div className="relative group">
-                <img src={user.profilePic?.lowResPic || dummyDp} alt="Profile" onClick={()=>setIsImagePopup(true)} className="w-32 h-32 mx-auto rounded-xl border-4 border-slate-500 shadow-lg object-cover cursor-pointer" />
+                <img src={user.profilePic?.lowResPic || dummyDp} alt="Profile" onClick={()=>setIsImagePopup(true)} className="w-32 h-32 mx-auto rounded-xl border-4 border-slate-500 shadow-lg object-cover lazy-loading cursor-pointer" />
                 <div title='verified' className={` ${!otherUser.isVerified ? 'hidden':'absolute'} bottom-1 right-1 bg-slate-300 dark:bg-[#1a1a1a] p-1 rounded-full shadow-md`}>
                     <MdVerifiedUser className='text-2xl text-green-700 dark:text-green-500'/>
                 </div>
                 <ImagePopup url={otherUser?.profilePic?.highResPic} lowRes={user?.profilePic?.lowResPic} isOpen={isImagePopup} onClose={()=>setIsImagePopup(false)} />
-                {/* <ImagePopup lowRes={user?.profilePic?.lowResPic} isOpen={isImagePopup} onClose={()=>setIsImagePopup(false)} /> */}
             </div>
 
             {/* User Info */}
@@ -108,7 +99,6 @@ const NextUserProfile = ({ user, isOpen, onClose}) => {
                 </div>
             </div>
 
-            {/* <div className="absolute top-2 left-2"> <ThemeToggle/> </div>  */}
             <div onClick={onClose} className="absolute top-2 right-2 text-xl cursor-pointer"> <MdClose/> </div> 
         </div>
     </section>

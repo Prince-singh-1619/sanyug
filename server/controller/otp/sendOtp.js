@@ -32,7 +32,12 @@ async function sendOtpController(req, res){
             from: 'Sanyug_Team@gmail.com',
             to: email,
             subject: 'Sanyug OTP Code',
-            text: `Your OTP code for Sanyug web app is ${otp}. This is only valid for 15 minutes.`
+            text: `Dear User,
+            
+Your One Time Password (OTP) for Sanyug web app is ${otp}. Do not share this OTP with anyone.
+            
+Please note: The OTP is valid for only one session or 15 minutes. If you refresh the page or leave the Sanyug app, you will need to generate a new OTP.
+            `
         });
 
         res.status(200).json({

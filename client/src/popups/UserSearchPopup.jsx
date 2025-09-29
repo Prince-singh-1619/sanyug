@@ -5,9 +5,7 @@ import { BiUser } from 'react-icons/bi'
 import SummaryApi from '../helpers/SummaryApi'
 import { useDispatch, useSelector } from 'react-redux'
 import { addNewConvo } from '../redux/slices/convoSlice'
-import { connectSocket, getSocket } from '../socket/socket'
-
-// connectSocket()
+import { getSocket } from '../socket/socket'
 
 const UserSearchPopup = ({ isOpen, onClose }) => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -18,12 +16,9 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
   const popupRef = useRef(null)
   const dispatch = useDispatch()
 
-  // const authToken = localStorage.getItem("authToken");
-  // const userData = JSON.parse(localStorage.getItem("userData"))
   const { authToken, userData } = useSelector(state => state.user)
   const userId = userData?._id
 
-  // const socket = connectSocket()
   const socket = getSocket();
 
   // Close popup when clicking outside
@@ -188,16 +183,13 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
 
       console.log('Conversation created/fetched:', resData);
       onClose()
-      // window.location.reload()  // reloads the page
-
-      // Optionally update your state to show new conversation instantly
-      // setConversations(prev => [...prev, resData]);
-    } catch (error) {
+    } 
+    catch (error) {
       console.error("Error adding to chat: ", error)
-    } finally{
+    } 
+    finally{
       setSearchQuery('')
       setIsAdding(false)
-      // onClose()
     }
   }
 
@@ -262,14 +254,10 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
             </div>
             {/* Error Message */}
             {error && (
-              // <div className="mt-1 mb-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
-                <p className="text-red-500  text-md">{error}</p>
-              // </div>
+              <p className="text-red-500  text-md">{error}</p>
             )}
-            
           </div>
 
-          
           {/* Search Result */}
           {searchResult && (
             <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
@@ -279,7 +267,7 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
                     <img 
                       src={searchResult.profilePic} 
                       alt={searchResult.firstName}
-                      className="w-12 h-12 rounded-lg object-cover"
+                      className="w-12 h-12 rounded-lg object-cover lazy-loading"
                     />
                   ) : (
                     <BiUser className="w-6 h-6 text-blue-600 dark:text-blue-400" />
@@ -292,16 +280,6 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     @{searchResult.username}
                   </p>
-                  {/* <div className="flex items-center gap-2 mt-1">
-                    <div className={`w-2 h-2 rounded-full ${
-                      searchResult.status === 'online' 
-                        ? 'bg-green-500' 
-                        : 'bg-gray-400'
-                    }`}></div>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {searchResult.status}
-                    </span>
-                  </div> */}
                 </div>
                 <button
                   onClick={handleAddToChat}
@@ -312,8 +290,7 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   ) : (
                     <MdPersonAdd className="w-5 h-5" />
-                  ) }
-                  
+                  ) }           
                 </button>
               </div>
             </div>

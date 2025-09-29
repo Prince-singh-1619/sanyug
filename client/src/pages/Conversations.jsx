@@ -22,20 +22,10 @@ import useIsMobile from '../hooks/useIsMobile'
 
 
 const Conversations = () => {
-    // const authToken = localStorage.getItem("authToken");
-    // const userData = JSON.parse(localStorage.getItem("userData"))
     const { authToken, userData } = useSelector(state => state.user)
     const userId = userData?._id
 
-    // console.log("authToken", typeof authToken, "userData", typeof userData)
-
     const { width, handleMouseDown } = useResizable(25, 20, 45);
-    // const [unformattedList, setUnformattedList] = useState([])
-    // const [activeChat, setActiveChat] = useState([])
-    // const [activeChatIdx, setActiveChatIdx] = useState(-1)
-    // const [activeConvoId, setActiveConvoId] = useState(0)
-    // const { activeConvoId_otherSide } = useSelector(state => state.chat);
-    // console.log("activeConvoId_otherSide in Conversations:", activeConvoId_otherSide);
 
     const { activeConvoId, convoList } = useSelector(state => state.convo);
     const [error, setError] = useState(false)
@@ -46,13 +36,8 @@ const Conversations = () => {
     const [isAddPopupOpen, setIsAddPopupOpen] = useState(false)
     const [search, setSearch] = useState("");
 
-    // const {  } = useSelector((state)=>state.convo)
-    
     const navigate = useNavigate()
-    // const outlet = useOutlet()
     const dispatch = useDispatch()
-
-    // const socket = connectSocket();
 
     const formatChatTimestamp = (dateString) =>{
         if (!dateString) return "";
@@ -134,9 +119,6 @@ const Conversations = () => {
                         name: convo.groupName,
                         profilePic: convo?.groupImage,
                         lastMsg: convo?.lastMessage,
-                        // hasMedia: convo?.media?.filename ? true:false,
-                        // lastMsg: convo?.lastMessage===''||!convo.lastMessage ? 'Files attached' : convo.lastMessage,
-                        // lastMsg: decryptMessage(convo.lastMessage, convo._id),
                         sender: convo.lastMessage?.sender,
                         participants: convo.participants,
                         createdAt: convo?.lastMessage?.createdAt ? formatChatTimestamp(convo?.lastMessage.createdAt) : formatChatTimestamp(convo.createdAt),
@@ -150,14 +132,9 @@ const Conversations = () => {
                         name: `${otherUser.firstName} ${otherUser.lastName}`,
                         profilePic: otherUser?.profilePic ,
                         lastMsg: convo?.lastMessage,
-                        // hasMedia: convo?.media?.filename ? true:false,
-                        // lastMsg: !convo?.lastMessage.text ? "File attached" : convo.lastMessage,
-                        // lastMsgId: convo.lastMessage.msgId,
-                        // lastMessage: convo.lastMessage?.text || '',
                         sender: convo?.lastMessage?.sender,
                         participants: convo.participants,
                         lastSeen:  formatChatTimestamp(otherUser.lastSeen),
-                        // createdAt: formatChatTimestamp(convo?.lastMessage?.createdAt)
                         createdAt: convo?.lastMessage?.createdAt ? formatChatTimestamp(convo?.lastMessage.createdAt) : formatChatTimestamp(convo.createdAt),
                         unreadCount: convo?.unreadCount || 0
                     };
@@ -174,7 +151,6 @@ const Conversations = () => {
             setLoading(false)
         }
     }
-    // if(convoList) console.log("After resData: ", convoList)
 
     useEffect(()=>{
        fetchAllChats()
@@ -182,15 +158,10 @@ const Conversations = () => {
     }, [])
 
     const displayMessage = (index) =>{
-        // setActiveChatIdx(index)
-        // console.log("convoList displayMessage: ", convoList)
         const selectedChat = convoList[index];
         if(!selectedChat) return 
 
         const convoId = selectedChat.convoId
-        // setActiveChat(selectedChat)
-        // setActiveConvoId(convoId)
-        // dispatch(setActiveChat({ chat: selectedChat, convoId: selectedChat.convoId }))
         dispatch(setActiveChat({ chat:selectedChat }))
         dispatch(setActiveConvo({ newConvoId:convoId, participants:selectedChat.participants.map(p=>p._id) }))
         dispatch(resetUnreadCount({convoId}))
@@ -200,10 +171,6 @@ const Conversations = () => {
         )
         console.log("convoId", convoId)
     }
-
-    // useEffect(()=>{
-    //     console.log("activeConvoId", activeConvoId)
-    // }, [activeConvoId])
 
     // for a new user
     const handleAddToChat = async() => {
@@ -244,18 +211,13 @@ const Conversations = () => {
     const handleOpenPopup = () => { setIsAddPopupOpen(true) }
     const handleClosePopup = () => { setIsAddPopupOpen(false) }
 
-    // const { convoId } = useParams();
     const isMobile = useIsMobile();
 
     if (isMobile && activeConvoId) {
         // Mobile: only show list or message
-        // if (convoId) {
-            return (
-                // <div className="h-full w-full">
-                <Outlet /> 
-                // </div>
-            );
-        // }
+        return (
+            <Outlet /> 
+        );
     }
 
     // filter convos to filterConvo and render
@@ -275,12 +237,10 @@ const Conversations = () => {
                 <HiOutlineDocumentSearch className="min-w-6 text-xl text-gray-800 dark:text-gray-300" />
                 <input type="text" placeholder="Search here" value={search} onChange={(e)=>setSearch(e.target.value)} className="w-full flex-1 bg-transparent outline-none text-sm  placeholder-gray-800 dark:placeholder-gray-400 " />
             </div>
-            {/* <span className='text-2xl tracking-widest font-bold'>Sanyug</span> */}
             <button onClick={()=>setConvoDropdown((prev)=>!prev)} className='max-[425px]:block hidden px-2 bg-transparent rounded-lg transition-colors'>
                 <SlOptionsVertical className='text-lg' />
             </button>
             <div className='absolute z-50 right-4 top-19'>{convoDropdown && <ConvoDropdown/>}</div>
-            
         </div>
 
         <div className='flex flex-col justify-center overflow-y-scroll scrollbar-hide'>
@@ -307,7 +267,7 @@ const Conversations = () => {
                         <button key={index} onClick={()=>displayMessage(index)} className={`h-18 my-auto cursor-pointer border-b border-slate-400 hover:bg-gray-300 dark:hover:bg-gray-500/75 ${activeConvoId===data.convoId ? 'bg-gray-400/75 dark:bg-gray-600 text-black dark:text-white':''}`}>
                             <div className='w-full flex items-center justify-between px-2 '>
                                 <div className='w-full flex items-center gap-2 justify-center'>
-                                    <img src={data.profilePic ? data.profilePic?.lowResPic : dummyDp} alt={data?.name} className='min-w-12 h-12 rounded-lg object-cover'/>
+                                    <img src={data.profilePic ? data.profilePic?.lowResPic : dummyDp} alt={data?.name} className='min-w-12 h-12 rounded-lg object-cover lazy-loading'/>
                                     <div className='w-full flex flex-col items-start'>
                                         <div className='w-full flex items-center justify-between'>
                                             <p className='text-lg font-lg capitalize text-nowrap overflow-hidden'>{data?.name}</p>

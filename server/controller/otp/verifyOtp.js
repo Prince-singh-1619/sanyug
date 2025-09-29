@@ -20,7 +20,7 @@ async function verifyOtpController(req, res){
             });
         }
 
-        // OTP matched – delete after use
+        // OTP matched, delete after use
         await otpModel.deleteOne({ _id: otpRecord._id });
     
         // console.log("Verifying OTP for:", email, "=>", otp);

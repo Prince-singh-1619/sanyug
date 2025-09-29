@@ -1,9 +1,7 @@
 import React, { useEffect } from 'react'
 import { connectSocket, getSocket } from './socket';
-import { addNewConvo, clearConvoState } from '../redux/slices/convoSlice';
+import { addNewConvo } from '../redux/slices/convoSlice';
 import { useDispatch, useSelector } from 'react-redux';
-import { clearChatState } from '../redux/slices/chatSlice';
-import { useState } from 'react';
 import { setOnlineUsers, addOnlineUser, removeOnlineUser } from '../redux/slices/onlineUsersSlice';
 
 connectSocket();
@@ -12,13 +10,10 @@ const socket = getSocket();
 const ConvoEvents = () => {
     const dispatch = useDispatch()
 
-    // const userData = JSON.parse(localStorage.getItem("userData"))
     const { userData } = useSelector(state => state.user)
     const userId = userData?._id
 
-    // const [onlineUsers, setOnlineUsers] = useState([])
-    // const { activeParticipants } = useSelector(state => state.convo);
-    const { onlineUsers } = useSelector(state => state.onlineUsers);
+    // const { onlineUsers } = useSelector(state => state.onlineUsers);
 
 
     const formatChatTimestamp = (dateString) =>{
@@ -44,17 +39,6 @@ const ConvoEvents = () => {
         return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
         }
     }
-
-    // // on refresh/reconnect, inform server about my activeConvoId again
-    // useEffect(()=>{
-    //     const handleBeforeUnload = () =>{
-    //         dispatch(clearChatState());
-    //         dispatch(clearConvoState());
-    //         socket.emit("active-convo-id", ({ sender:userId, activeConvoId:null, prevParticipants:activeParticipants, activeParticipants:[] }));
-    //     }
-    //     window.addEventListener("beforeunload", handleBeforeUnload);
-    //     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-    // }, [socket, userId, activeParticipants])
 
     useEffect(()=>{
         socket.on("new-convo-added-received", ({newConvoForB})=>{
@@ -99,20 +83,16 @@ const ConvoEvents = () => {
     }, [dispatch, socket])
 
     useEffect(()=>{
-        // const socket = connectSocket();
         socket.emit("get-online-users");
         
         socket.on("all-online-users", (users)=>{
             dispatch(setOnlineUsers(users))
-            // console.log("All users in all-online-users", users)
         })
         socket.on("user-online", (userId)=>{
             dispatch(addOnlineUser(userId))
-            // console.log("users in user-online", onlineUsers)
         })
         socket.on("user-offline", (userId)=>{
             dispatch(removeOnlineUser(userId))
-            // console.log("users in user-offline", onlineUsers)
         })
 
         return () =>{

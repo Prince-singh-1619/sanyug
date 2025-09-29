@@ -24,25 +24,17 @@ const chatSlice = createSlice({
                 state.messageList[convoId] = [];
             }
             state.messageList[convoId].push(message)
-
-            // update last message in convoSlice as well
-            // store.dispatch(setLastMessage({ convoId, msg: message }));
         },
         updateTempMsgId: (state, action) => {
             const { convoId, tempId, newId, newPublicId } = action.payload;
-            // console.log("updateTempMsgId called with:", { convoId, tempId, newId });
-            // console.log("Before update:", state.messageList[convoId]);
             state.messageList[convoId] = state.messageList[convoId].map(msg =>
                 msg._id === tempId ? { ...msg, _id:newId, isTemp:false, 
                                         media:msg.media ? {...msg.media, publicId:newPublicId} : null } 
                                     : msg    
             );
-            // console.log("After update:", state.messageList[convoId]);
         },
         markMessageDelivered: (state, action)=>{
-            // here activeConvoId is of receiver sent from server
             const {msgId, receiver} = action.payload;
-            // console.log("activeConvoId_otherSide", state.activeConvoId_otherSide)
 
             for(const convoId in state.messageList){
                 if(!state.messageList[convoId]) continue;
@@ -71,25 +63,6 @@ const chatSlice = createSlice({
                 }
             }
         },
-        // markMessageAsRead: (state, action)=>{
-        //     const { activeConvoId_otherSide, sender } = action.payload;
-        //     // state.activeConvoId_otherSide = activeConvoId_otherSide;
-        //     // console.log("activeConvoId_otherSide", state.activeConvoId_otherSide)
-        //     // make sure to update only if activeConvoId matches
-        //     // if(state.activeChat?.convoId !== activeConvoId_otherSide) return;
-        //     const messages = state.messageList[activeConvoId_otherSide];
-        //     console.log("messages in markMessageAsRead", messages)
-        //     if(!messages) return;
-
-        //     for(const msg of messages){
-        //         if(!msg.readBy){
-        //             msg.readBy = [];
-        //         }
-        //         if(!msg.readBy.includes(sender)){
-        //             msg.readBy.push(sender);
-        //         }
-        //     }
-        // },
         markMessageAsRead: (state, action)=>{
             const { reader, convoId } = action.payload;
             console.log("reader", reader, ", convoId", convoId)
@@ -123,7 +96,6 @@ const chatSlice = createSlice({
         },
         clearChatState: (state)=>{
             state.activeChat = null;
-            // state.activeConvoId_otherSide = null;
             state.messageList = {};
         }
     },
@@ -131,13 +103,11 @@ const chatSlice = createSlice({
 
 export const { 
     setActiveChat, 
-    // chatUserTyping,
     addMessage, 
     updateTempMsgId, 
     markMessageDelivered,
     markMessageAsRead,
     setMessages, 
-    // setUnreadMessages,
     deleteMessage, 
     clearChatState 
 } = chatSlice.actions;

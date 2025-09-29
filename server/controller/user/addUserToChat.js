@@ -34,7 +34,6 @@ async function addUserToChatController(req, res){
             error: false
         });
     } catch (err) {
-        // console.error(err);
         res.status(500).json({ 
             message: err.message || 'Server error' ,
             error: true,
