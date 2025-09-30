@@ -7,6 +7,15 @@
   command = "npm install && npm run build" # install deps and build
 
 # -----------------------
+# API Proxy (if you have a backend)
+# -----------------------
+[[redirects]]
+  from = "/api/*"
+  to = "https://sanyug-server.onrender.com/:splat"
+  status = 200
+  force = true
+
+# -----------------------
 # SPA Fallback for React Router
 # -----------------------
 [[redirects]]
@@ -15,15 +24,6 @@
   status = 200
   force = true
   conditions = { "!file" = true }  # only redirect if the file does not exist
-
-# -----------------------
-# API Proxy (if you have a backend)
-# -----------------------
-[[redirects]]
-  from = "/api/*"
-  to = "https://sanyug-server.onrender.com/:splat"
-  status = 200
-  force = true
 
 # -----------------------
 # Security Headers + CSP
