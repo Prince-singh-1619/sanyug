@@ -1,5 +1,5 @@
-// const backendDomain = 'http://localhost:8080'
-const backendDomain = 'https://sanyug-server.onrender.com'
+const backendDomain = 'http://localhost:8080'
+// const backendDomain = 'https://sanyug-server.onrender.com'
 
 const SummaryApi = {
     sendOtp:{

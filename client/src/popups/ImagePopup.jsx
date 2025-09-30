@@ -4,7 +4,7 @@ import dummyDp from '../assets/person-dummy.svg'
 import { toast } from 'react-hot-toast';
 
 const ImagePopup = ({url, lowRes, isOpen, onClose}) => {
-    url='https://res.cloudinary.com/dekeq9j99/image/upload/v1758523632/ejxpu1ntgpqtqhzalirj.png'
+    // url='https://res.cloudinary.com/dekeq9j99/image/upload/v1758523632/ejxpu1ntgpqtqhzalirj.png'
     const dialogRef = useRef(null)
     const [loading, setLoading] = useState(false)
     const [highRes, setHighRes] = useState(lowRes)
