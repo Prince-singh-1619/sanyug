@@ -39,8 +39,9 @@
     Content-Security-Policy = """
       default-src 'self';
       script-src 'self' https://accounts.google.com https://apis.google.com;
-      style-src 'self' 'unsafe-inline';
-      img-src 'self' data:;
-      connect-src 'self' https://accounts.google.com https://apis.google.com https://sanyug-server.onrender.com;
+      style-src 'self' 'unsafe-inline' 'https://accounts.google.com/gsi/style' ;
+      frame-src 'self' https://accounts.google.com" ;
+      img-src 'self' data: https://lh3.googleusercontent.com;
+      connect-src 'self' https://sanyug-server.onrender.com https://accounts.google.com https://apis.google.com ;
       font-src 'self';
     """

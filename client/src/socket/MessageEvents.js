@@ -15,7 +15,7 @@ const MessageEvents = () => {
 
     const { userData } = useSelector(state => state.user)
     const userId = userData?._id;
-    console.log("userId in messageEvents:", userId)
+    // console.log("userId in messageEvents:", userId)
 
     const { activeConvoId } = useSelector(state => state.convo);
     const { activeConvoId_otherSide } = useSelector(state=> state.chat);
@@ -28,13 +28,13 @@ const MessageEvents = () => {
             const plainText = await decryptMessage(msg.text, msg.conversationId);
             const orgMsg =  {...msg, text: plainText, }// replace encrypted with decrypted
             
-            console.log( "convoId being used:", msg.conversationId, typeof msg.conversationId );
+            // console.log( "convoId being used:", msg.conversationId, typeof msg.conversationId );
             if(isSound && msg.conversationId===activeConvoId){
-                console.log("is Read", msg.conversationId===activeConvoId)
+                // console.log("is Read", msg.conversationId===activeConvoId)
                 new Audio(new_msg).play().catch((err)=>console.log("Sound coundn't play: ", err))
             }
             if(isSound && msg.conversationId!==activeConvoId){
-                console.log("is delivered", msg.conversationId!==activeConvoId)
+                // console.log("is delivered", msg.conversationId!==activeConvoId)
                 new Audio(new_notification).play().catch((err)=>console.log("Sound coundn't play: ", err))
             }
 
@@ -53,8 +53,8 @@ const MessageEvents = () => {
     // for sender - confirmation
     useEffect(() => {
         socket.on("message-delivery-confirmed", ({ msgId, receiver }) => {
-            console.log( "msg sent confirmed by server. msgId:", msgId, "receiver:", receiver );
-            console.log("my Id:", userId);
+            // console.log( "msg sent confirmed by server. msgId:", msgId, "receiver:", receiver );
+            // console.log("my Id:", userId);
             // tempId taken care in http success itself
             dispatch(markMessageDelivered({ msgId, receiver }));
             dispatch(markLastMsgDelivered({ msgId, receiver, activeConvoId_otherSide }))
