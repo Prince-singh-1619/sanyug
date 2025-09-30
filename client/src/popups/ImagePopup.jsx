@@ -17,13 +17,14 @@ const ImagePopup = ({url, lowRes, isOpen, onClose}) => {
             if (!response.ok) {
                 toast.error("Coudn't fetch Dp")
                 console.log("Failed to fetch image ", response.status)
+                setHighRes(lowRes); 
                 return;
             }
-
             const blob = await response.blob();
             const objectUrl = URL.createObjectURL(blob);
             setHighRes(objectUrl);  // usable like an uploaded file
         } catch (err) {
+            setHighRes(lowRes);
             console.error("Error fetching Cloudinary image:", err);
         }
         setLoading(false)
