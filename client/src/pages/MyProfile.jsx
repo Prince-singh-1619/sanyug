@@ -188,7 +188,7 @@ const MyProfile = () => {
       <div className="relative h-fit min-w-1/2 max-w[90%] flex flex-col items-center p-8 mt-8 max-w-2xl mx-auto bg-slate-300 dark:bg-[#151515] shadow-xl rounded-lg">
         {/* Profile Picture */}
         <div className="relative group">
-          <img src={(isEditing ? (user.profilePic?.highResPic||user.profilePic?.lowResPic) : (userData.profilePic?.highResPic||userData.profilePic?.lowResPic)) || dummyDp} alt="Profile" onClick={()=>!isEditing && setIsImagePopup(true)} className={`w-32 h-32 mx-auto rounded-xl border-4 border-slate-500 shadow-lg object-cover lazy-loading ${!isEditing && user.profilePic?.highResPic ? 'cursor-pointer':''} `} />
+          <img src={ (isEditing ? user.profilePic?.lowResPic : userData.profilePic?.lowResPic) || dummyDp} alt="Profile" onClick={()=>!isEditing && setIsImagePopup(true)} className={`w-32 h-32 mx-auto rounded-xl border-4 border-slate-500 shadow-lg object-cover lazy-loading ${!isEditing && user.profilePic?.highResPic ? 'cursor-pointer':''} `} />
           {isEditing && (
             <div>
               <input id='upload-pic' type='file' name='profilePic' accept="image/*" className='hidden' onChange={handleUploadPic}/>
@@ -215,18 +215,22 @@ const MyProfile = () => {
         {/* User Info */}
         <div className="mt-6 w-full">
           {isEditing ? (
-            <div className="grid grid-cols-1 max-md:grid-cols-2 gap-4">
-              <input type="text" name="firstName" value={user.firstName} onChange={handleChange} className="border p-3 rounded-lg w-full " placeholder="firstName" />
-              <input type="text" name="lastName" value={user.lastName} onChange={handleChange} className="border p-3 rounded-lg w-full" placeholder="lastName"/>
-              <input type="text" name="username" value={user.username} onChange={handleChange} className="border p-3 rounded-lg w-full break-words" placeholder="Username" />
-              <span className="border p-3 rounded-lg cursor-not-allowed opacity-75 w-full break-words">{user.email}</span>
+            <div className="w-full flex flex-col justify-center items-center gap-4">
+              <div className='w-full flex max-[425px]:flex-col gap-4'>
+                <input type="text" name="firstName" value={user.firstName} onChange={handleChange} className="border p-3 rounded-lg w-full" placeholder="firstName" />
+                <input type="text" name="lastName" value={user.lastName} onChange={handleChange} className="border p-3 rounded-lg w-full" placeholder="lastName"/>
+              </div>
+              <div className='w-full flex max-[425px]:flex-col gap-4'>
+                <input type="text" name="username" value={user.username} onChange={handleChange} className="border p-3 rounded-lg w-full break-words" placeholder="Username" />
+                <span className="border p-3 rounded-lg cursor-not-allowed opacity-75 w-full min-[425px]:max-w-[48.5%] break-words">{user.email}</span>
+              </div>
               {/* <select name="gender" value={user.gender} onChange={handleChange} className="border p-3 rounded-lg">
                 <option>Male</option>
                 <option>Female</option>
                 <option>Other</option>
               </select> */}
               {/* <input type="date" name="birthday" value={user.birthday} onChange={handleChange} className="border p-3 rounded-lg"/> */}
-              <textarea name="status" value={user.status} onChange={handleChange} className="border p-3 rounded-lg col-span-2 " placeholder="Status"/>
+              <textarea name="status" value={user.status} onChange={handleChange} className="border p-3 rounded-lg w-full col-span-2 " placeholder="Status"/>
             </div>
           ) : (
             <div className="mx-auto flex flex-col flex-wrap gap-2 ">
