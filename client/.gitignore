@@ -16,6 +16,9 @@ Test.jsx
 instructions.txt
 zzz
 
+dist
+netlify.toml
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
