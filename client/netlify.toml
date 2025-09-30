@@ -2,7 +2,7 @@
 # Netlify Build Settings
 # -----------------------
 [build]
-  base    = "client"                       # your React frontend folder
+ # base    = "client"                       # your React frontend folder
   publish = "dist"                         # Vite outputs production files here
   command = "npm install && npm run build" # install deps and build
 
