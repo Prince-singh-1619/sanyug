@@ -47,18 +47,11 @@ const convoSlice = createSlice({
             const convoIndex = state.convoList.findIndex(c => c.convoId === convoId);
             if (convoIndex !== -1) {
                 const [convo] = state.convoList.splice(convoIndex, 1); // remove from current position
-                // convo.lastMsg = message; // update last message
-                // convo.createdAt = message.createdAt; // optional: update createdAt for sorting/fallback
                 state.convoList.unshift(convo); // add at the start
             } 
             else {
                 // If conversation doesn't exist (new convo), optionally add it at top
-                state.convoList.unshift({
-                    convoId,
-                    // lastMsg: message,
-                    // participants: message.participants || [],
-                    // createdAt: message.createdAt
-                });
+                state.convoList.unshift({ convoId });
             }
         },
         convoTypingUser: (state, action)=>{
