@@ -31,12 +31,12 @@ const ConvoEvents = () => {
         const messageDate = stripTime(date);
 
         if (messageDate.getTime() === today.getTime()) {
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         } else if (messageDate.getTime() === yesterday.getTime()) {
-        return 'Yesterday';
+            return 'Yesterday';
         } else {
-        // Older -> show date
-        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+            // Older -> show date
+            return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
         }
     }
 

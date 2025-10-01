@@ -20,7 +20,7 @@ import { addMessage, setActiveChat, setMessages, updateTempMsgId } from "../redu
 import DeleteConfirm from '../popups/DeleteConfirm';
 import MsgIndicator from '../components/MsgIndicator';
 import { toast } from 'react-hot-toast';
-import { setActiveConvo, setLastMessage, updateLastTempMsgId } from '../redux/slices/convoSlice';
+import { reOrderConvo, setActiveConvo, setLastMessage, updateLastTempMsgId } from '../redux/slices/convoSlice';
 import EmojiPicker from "emoji-picker-react"
 import { motion, AnimatePresence } from "framer-motion";
 import { encryptMessage, decryptMessage } from '../helpers/cryption'
@@ -125,6 +125,7 @@ const Message = () => {
       createdAt: new Date().toISOString()
     }
     dispatch(addMessage({ message: baseMsg }));
+    dispatch(reOrderConvo({ convoId: baseMsg.conversationId }))
     dispatch(setLastMessage({ msg:{ 
         ...baseMsg, 
         text: baseMsg.text || "File attached"

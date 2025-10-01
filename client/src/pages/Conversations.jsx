@@ -142,6 +142,13 @@ const Conversations = () => {
                 }
             });
 
+            // Sort by last message timestamp (most recent first)
+            allConvo.sort((a, b) => {
+                const aTime = a.lastMsg?.createdAt ? new Date(a.lastMsg.createdAt).getTime() : new Date(a.createdAt).getTime();
+                const bTime = b.lastMsg?.createdAt ? new Date(b.lastMsg.createdAt).getTime() : new Date(b.createdAt).getTime();
+                return bTime - aTime; // descending order
+            });
+
             // setConvoList(allConvo); // update state
             dispatch(setConvos({allConvo, userId}));
             // console.log("convo list: ", allConvo)

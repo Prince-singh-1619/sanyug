@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { connectSocket, getSocket } from "./socket";
 import { addMessage, deleteMessage, markMessageAsRead, markMessageDelivered } from "../redux/slices/chatSlice";
 import { useDispatch, useSelector } from "react-redux";
-import { markLastMsgDelivered, markLastMsgRead, setLastMessage, updateUnreadCount } from "../redux/slices/convoSlice";
+import { markLastMsgDelivered, markLastMsgRead, reOrderConvo, setLastMessage, updateUnreadCount } from "../redux/slices/convoSlice";
 import { decryptMessage } from "../helpers/cryption";
 import new_msg from '../assets/notify 3.mp3'
 import new_notification from '../assets/notify 1.mp3'
@@ -40,6 +40,7 @@ const MessageEvents = () => {
 
             dispatch(addMessage({ message: orgMsg }));
             dispatch(updateUnreadCount({convoId:orgMsg.conversationId, activeConvoId_otherSide}))
+            dispatch(reOrderConvo({convoId: orgMsg.conversationId}))
             dispatch(setLastMessage({ convoId: orgMsg.conversationId, msg:orgMsg }));
             // receiver to sender
             socket.emit("message-delivered", ({ msgId:orgMsg._id, sender:orgMsg.sender, receiver:userId, activeConvoId}));
