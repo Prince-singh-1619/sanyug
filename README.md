@@ -16,6 +16,23 @@ Sanyug is a real-time chat application built with the MERN stack (MongoDB, Expre
 
 ---
 
+## 📷 Screenshots
+
+<p align="center">
+  <img src="./client/src/assets/SS 1.png" alt="SignUp" width="44%" />
+  <img src="./client/src/assets/SS 2.png" alt="Home" width="44%" />
+</p>
+<p align="center">
+  <img src="./client/src/assets/SS 3.png" alt="Message" width="44%" />
+  <img src="./client/src/assets/SS 4.png" alt="Add to chat" width="44%" />
+</p>
+<p align="center">
+  <img src="./client/src/assets/SS 5.png" alt="My profile" width="44%" />
+  <img src="./client/src/assets/SS 6.png" alt="Settings" width="44%" />
+</p>
+
+---
+
 ## Tech Stack
 
 - **Frontend:** React, Redux, Tailwind CSS
