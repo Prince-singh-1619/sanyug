@@ -126,18 +126,6 @@ const GoogleLogin = () => {
     return (
         <div className='w-full'>
 
-            {/* <div 
-                onClick={() => {
-                    // Trigger Google popup manually
-                    window.google.accounts.id.prompt();  
-                }}
-                className="w-full rounded-lg bg-[#94A3B8] dark:bg-[#322f2f] flex justify-center items-center gap-2 py-2 cursor-pointer hover:opacity-90 transition"
-                >
-                <FcGoogle className="text-xl" />
-                <span className="text-white dark:text-gray-200">Continue with Google</span>
-            </div> */}
-
-
             {isGoogleSDKReady ? (
                 <div 
                     ref={googleBtnRef} 
@@ -153,31 +141,8 @@ const GoogleLogin = () => {
                 </div>
             )}
 
-
-
-
-
-
-            {/* Google button container with theme-aware styling
-            <div 
-                ref={googleBtnRef} 
-                className='w-full rounded-lg bg-[#94A3B8] dark:bg-[#322f2f] flex justify-center items-center transition-colors duration-200' 
-            > Continue with Google </div>
-            
-            //  Fallback button if Google SDK fails to load or render 
-            {!isGoogleSDKReady && (
-                <div 
-                    className='btn w-full flex gap-2 items-center justify-center text-lg rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#18181b] text-slate-800 dark:text-slate-100 hover:bg-slate-100 hover:dark:bg-[#23232b] transition-colors duration-200 py-2 cursor-pointer ' 
-                    onClick={handleManualGoogleLogin} 
-                >
-                    <i className='text-xl'><FcGoogle/></i>
-                    <span>Continue with Google</span>
-                </div>
-            )} */}
-
             {/* loading animation */}
-            {
-                loading ? (
+            { loading ? (
                 <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xs ">
                     <div className="loader"></div> 
                 </div>
