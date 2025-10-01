@@ -4,7 +4,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Slide, ToastContainer } from 'react-toastify'
 import Login from './pages/Login'
 import ForgotPassword from './pages/ForgotPassword'
-// import Home from './pages/Home'
 import Conversations from './pages/Conversations'
 import Message from './pages/Message'
 import MyProfile from './pages/MyProfile'
@@ -17,9 +16,10 @@ import Setting from './pages/Setting'
 import PublicOnlyRoute from './helpers/PublicOnlyRoute '
 import ProtectedRoute from './helpers/ProtectedRoute'
 import ConvoEvents from './socket/ConvoEvents'
-import NextUserProfile from './popups/NextUserProfile'
 import { useEffect } from 'react'
 import { connectSocket } from './socket/socket'
+// import useIsMobile from './hooks/useIsMobile'
+import ScreenLayout from './helpers/ScreenLayout'
 
 
 const App = () => {
@@ -49,11 +49,14 @@ const App = () => {
           <Route path="/register" element={<PublicOnlyRoute> <Register/> </PublicOnlyRoute>} />
           <Route path="/login" element={<PublicOnlyRoute> <Login/> </PublicOnlyRoute>} />
           <Route path="/forgot-password" element={<PublicOnlyRoute> <ForgotPassword/> </PublicOnlyRoute>} />
-
+          
           <Route path="/" element={<ProtectedRoute> <Navigate to="/conversations"/> </ProtectedRoute> } /> 
-          <Route path="/conversations" element={<ProtectedRoute> <Conversations/> </ProtectedRoute>} >
+          <Route path="/*" element={ <ScreenLayout/> } /> 
+          
+          {/* <Route path="/conversations" element={<ProtectedRoute> <Conversations/> </ProtectedRoute>} >
             <Route path=":convoId" element={<ProtectedRoute> <Message/> </ProtectedRoute>} />
-          </Route>
+          </Route> */}
+
           <Route path="/status" element={<ProtectedRoute> <Status/> </ProtectedRoute> } />
           <Route path="/my-profile" element={<ProtectedRoute> <MyProfile/> </ProtectedRoute> } />
           <Route path="/setting" element={<ProtectedRoute> <Setting/> </ProtectedRoute> } />

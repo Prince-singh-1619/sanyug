@@ -11,7 +11,7 @@ import ImagePopup from './ImagePopup';
 const NextUserProfile = ({ user, isOpen, onClose}) => {
     const { userData } = useSelector(state => state.user)
     const userId = userData?._id
-    const otherUser = user.participants.find(p => p._id !== userId);
+    const otherUser = user?.participants.find(p => p._id !== userId);
 
     const [isImagePopup, setIsImagePopup] = useState(false)
 

@@ -84,7 +84,7 @@ const chatSlice = createSlice({
         setMessages: (state, action) =>{
             const {convoId, messages} = action.payload;
             state.messageList[convoId] = messages;
-            console.log("state.messageList[convoId]", state.messageList[convoId])
+            // console.log("state.messageList[convoId]", state.messageList[convoId])
         },
         deleteMessage: (state, action) =>{ // not functioning properly, check again
             const {msgId, convoId} = action.payload

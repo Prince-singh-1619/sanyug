@@ -19,6 +19,7 @@ import { HiOutlineDocumentSearch } from 'react-icons/hi'
 import ConvoDropdown from '../components/ConvoDropdown'
 import UserSearchPopup from '../popups/UserSearchPopup'
 import useIsMobile from '../hooks/useIsMobile'
+import Message from './Message'
 
 
 const Conversations = () => {
@@ -153,9 +154,12 @@ const Conversations = () => {
     }
 
     useEffect(()=>{
-       fetchAllChats()
+        if (!convoList || convoList.length === 0){
+            console.log("Calling.....")
+            fetchAllChats()
+        }
     //    if(!convoList) fetchAllChats()
-    }, [])
+    }, [convoList, dispatch])
 
     const displayMessage = (index) =>{
         const selectedChat = convoList[index];
@@ -166,10 +170,8 @@ const Conversations = () => {
         dispatch(setActiveConvo({ newConvoId:convoId, participants:selectedChat.participants.map(p=>p._id) }))
         dispatch(resetUnreadCount({convoId}))
 
-        navigate(`/conversations/${convoId}`, 
-            {state: {activeChat:selectedChat}}
-        )
-        console.log("convoId", convoId)
+        navigate(`/conversations/${convoId}`)
+        // console.log("convoId", convoId)
     }
 
     // for a new user
@@ -213,12 +215,12 @@ const Conversations = () => {
 
     const isMobile = useIsMobile();
 
-    if (isMobile && activeConvoId) {
-        // Mobile: only show list or message
-        return (
-            <Outlet /> 
-        );
-    }
+    // if (isMobile && activeConvoId) {
+    //     // Mobile: only show list or message
+    //     return (
+    //         <Outlet /> 
+    //     );
+    // }
 
     // filter convos to filterConvo and render
     const filteredConvos = convoList.filter(convo=> 
@@ -240,7 +242,7 @@ const Conversations = () => {
             <button onClick={()=>setConvoDropdown((prev)=>!prev)} className='max-[425px]:block hidden px-2 bg-transparent rounded-lg transition-colors'>
                 <SlOptionsVertical className='text-lg' />
             </button>
-            <div className='absolute z-50 right-4 top-19'>{convoDropdown && <ConvoDropdown/>}</div>
+            <div className='absolute z-50 right-4 top-19'>{convoDropdown && <ConvoDropdown isOpen={convoDropdown} onClose={()=>setConvoDropdown(false)} />}</div>
         </div>
 
         <div className='flex flex-col justify-center overflow-y-scroll scrollbar-hide'>
@@ -330,10 +332,10 @@ const Conversations = () => {
       </section>
 
       {/* message area */}
-      <section className='w-full max-md:hidden flex-1'>
-        {activeConvoId ? (
+      <section  className='w-full max-md:hidden flex-1'>
+        {activeConvoId!==null ? (
             <Outlet/>
-        )  :(
+        )  :( !isMobile && 
             <div className='flex flex-col items-center justify-center h-full text-center rounded-lg border border-slate-400 shadow-sm'>
                 <div className='w-16 h-16 bg-gray-400 dark:bg-gray-700 rounded-xl flex items-center justify-center mb-4'>
                     <AiOutlineSelect className='text-2xl ' />

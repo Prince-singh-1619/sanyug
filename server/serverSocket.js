@@ -116,7 +116,7 @@ function serverSocketHandler(io){
       } catch (error) {
         console.log("Error updating readBy in DB by WS")
       }
-      sender.forEach(id=>{
+      sender?.forEach(id=>{
         io.to(id.toString()).emit("message-read-confirmed", ({reader, convoId}))
         console.log("reader:", reader, ", convoId:", convoId)
       })

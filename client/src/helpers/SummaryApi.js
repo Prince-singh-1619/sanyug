@@ -55,7 +55,6 @@ const SummaryApi = {
         method: "PUT"
     },
     
-
 }
 
 export default SummaryApi

@@ -52,7 +52,7 @@ const Message = () => {
   const onlineUsers = useSelector(state => state.onlineUsers?.onlineUsers)
   const { activeChat, messageList } = useSelector((state)=>state.chat)
   const { activeConvoId, convoList, convoUserTyping } = useSelector(state => state.convo);
-  const userLastSeen = convoList.find(c=>c.convoId===activeConvoId).lastSeen
+  const userLastSeen = convoList?.find(c=>c.convoId===activeConvoId)?.lastSeen
 
   const convoId = activeConvoId
 
@@ -382,7 +382,7 @@ const Message = () => {
       {/* Header */}
       <header className='h-16 w-full px-2 py-3 flex justify-between items-center bg-gray-300 dark:bg-gray-600 border-b border-gray-200 dark:border-gray-700 rounded-t-lg'>
         <div className='flex justify-center items-center'>
-          <Link onClick={handleBackNav} className='hidden max-md:block p-2'> <IoMdArrowBack/> </Link> 
+          <button onClick={handleBackNav} className='hidden max-md:block p-2'> <IoMdArrowBack/> </button> 
           <button onClick={()=>setShowDetails(true)} className='flex items-center gap-3  cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors'>
             <img src={activeChat?.profilePic?.lowResPic || dummyDp} alt='Profile' className='w-10 h-10 object-cover lazy-loading rounded-lg border-2 border-gray-200 dark:border-gray-800' />
             <div className='flex flex-col items-start'>
@@ -411,7 +411,7 @@ const Message = () => {
           <button onClick={()=>setChatDropdown((prev)=>!prev)} className='p-3 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors'>
             <SlOptionsVertical className='text-lg' />
           </button>
-          <div className='absolute z-50 right-4 top-16 '>{chatDropdown && (<ChatDropdown/>)}</div>
+          <div className='absolute z-50 right-4 top-16 '>{chatDropdown && (<ChatDropdown isOpen={chatDropdown} onClose={()=>setChatDropdown(false)}/>)}</div>
           
         </div>
 

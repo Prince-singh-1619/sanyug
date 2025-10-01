@@ -23,7 +23,7 @@ const rootReducer = combineReducers({
 const persistConfig = {
     key: "root",
     storage,
-    whitelist: ["user", "chat", "convo", "onlineUsers", "settings"], // persist on refresh
+    whitelist: ["user", "chat", "settings"], // persist on refresh
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

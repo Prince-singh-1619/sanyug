@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {motion} from 'motion/react'
 import { Link } from 'react-router-dom'
 import ThemeToggle from './ThemeToggle'
 import { MdOutlineSettings, MdPersonAddAlt1 } from 'react-icons/md'
 import { CgProfile } from 'react-icons/cg'
 
-const ConvoDropdown = () => {
+const ConvoDropdown = ({isOpen, onClose}) => {
 
     const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark")
     useEffect(()=>{
@@ -20,11 +20,32 @@ const ConvoDropdown = () => {
     const handleTheme = () =>{
         setTheme(theme==="dark" ? "light" : "dark")
     }
+
+    const dialogRef = useRef(null)
+    
+    
+    useEffect(()=>{
+        const handleClickOutside = (e) =>{
+            if(dialogRef.current && !dialogRef.current.contains(e.target)){
+                onClose()
+            }
+        }
+        
+        if(isOpen){
+            document.addEventListener('mousedown', handleClickOutside)
+        }
+
+        return () =>{
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [isOpen, onClose])
+
+    if(!isOpen) return null
     
 
   return (
-    <div className='z-50'>
-        <motion.div  
+    <div className='inset-0 backdrop-blur-xs z-50'>
+        <motion.div  ref={dialogRef}
           initial={{y:-25}} 
           animate={{y:0}} 
           transition={{duration:0.3,}}
