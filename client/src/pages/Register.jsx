@@ -173,7 +173,10 @@ const Register = () => {
           <ThemeToggle />
         </div>
         <div className='w-[95%] min-md:w-1/2 flex flex-col gap-4'>
-          <p className='text-8xl max-sm:text-5xl font-bold text-center tracking-widest'>Sanyug</p>
+          <div className='flex items-center gap-2 mx-auto'>   
+            <img src={'/logo.png'} alt='logo' className='w-20 h-20'/>
+            <p className='text-8xl max-sm:text-5xl font-bold text-center tracking-widest text-gray-900 dark:text-white'>Sanyug</p>
+          </div>
           <p className='text-5xl max-sm:text-3xl font-bold text-center opacity-75'>Create an account</p>
           
           {/* input profile data */}

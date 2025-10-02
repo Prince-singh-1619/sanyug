@@ -85,7 +85,10 @@ const Login = () => {
             <ThemeToggle />
         </div>
         <div className='min-md:w-1/2 flex flex-col gap-4 items-center justify-start'>
-            <p className='text-8xl max-sm:text-5xl font-bold text-center tracking-widest text-gray-900 dark:text-white'>Sanyug</p>
+            <div className='flex items-center gap-2 '>   
+                <img src={'/logo.png'} alt='logo' className='w-20 h-20'/>
+                <p className='text-8xl max-sm:text-5xl font-bold text-center tracking-widest text-gray-900 dark:text-white'>Sanyug</p>
+            </div>
             <p className='text-5xl max-sm:text-3xl font-bold text-center opacity-75 text-gray-700 dark:text-gray-300'>Login</p>
             
             {/* input profile data */}
