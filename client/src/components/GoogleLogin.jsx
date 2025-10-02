@@ -129,8 +129,11 @@ const GoogleLogin = () => {
             {isGoogleSDKReady ? (
                 <div 
                     ref={googleBtnRef} 
-                    className='w-full rounded-lg bg-[#94A3B8] dark:bg-[#322f2f] flex justify-center items-center transition-colors duration-200' 
-                > Continue with Google </div>
+                    className='w-full rounded-lg bg-[#94A3B8] dark:bg-[#322f2f] flex gap-2 justify-center items-center transition-colors duration-200' 
+                > 
+                    <i className='text-xl'><FcGoogle/></i>
+                    <span className="w-full">Continue with Google</span>
+                </div>
             ) : (
                 <div 
                     className='btn w-full flex gap-2 items-center justify-center text-lg rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#18181b] text-slate-800 dark:text-slate-100 hover:bg-slate-100 hover:dark:bg-[#23232b] transition-colors duration-200 py-2 cursor-pointer ' 

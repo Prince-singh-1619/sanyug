@@ -19,7 +19,7 @@ import { HiOutlineDocumentSearch } from 'react-icons/hi'
 import ConvoDropdown from '../components/ConvoDropdown'
 import UserSearchPopup from '../popups/UserSearchPopup'
 import useIsMobile from '../hooks/useIsMobile'
-import Message from './Message'
+import logo from '../assets/logo 3.png'
 
 
 const Conversations = () => {
@@ -222,13 +222,6 @@ const Conversations = () => {
 
     const isMobile = useIsMobile();
 
-    // if (isMobile && activeConvoId) {
-    //     // Mobile: only show list or message
-    //     return (
-    //         <Outlet /> 
-    //     );
-    // }
-
     // filter convos to filterConvo and render
     const filteredConvos = convoList.filter(convo=> 
         convo.name.toLowerCase().includes(search.toLowerCase())
@@ -344,8 +337,9 @@ const Conversations = () => {
             <Outlet/>
         )  :( !isMobile && 
             <div className='flex flex-col items-center justify-center h-full text-center rounded-lg border border-slate-400 shadow-sm'>
-                <div className='w-16 h-16 bg-gray-400 dark:bg-gray-700 rounded-xl flex items-center justify-center mb-4'>
-                    <AiOutlineSelect className='text-2xl ' />
+                <div className='w-32 h-32 p-1 border border-gray-400 dark:border-gray-700 rounded-lg flex items-center justify-center mb-4'>
+                    {/* <AiOutlineSelect className='text-2xl ' /> */}
+                    <img src={logo} alt='logo'/>
                 </div>
                 <p className='text-3xl font-medium mb-2'>
                     Select a conversation

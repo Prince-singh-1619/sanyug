@@ -6,6 +6,7 @@ import { markLastMsgDelivered, markLastMsgRead, reOrderConvo, setLastMessage, up
 import { decryptMessage } from "../helpers/cryption";
 import new_msg from '../assets/notify 3.mp3'
 import new_notification from '../assets/notify 1.mp3'
+import pushNotification from "../helpers/pushNotification";
 
 connectSocket();
 const socket = getSocket();
@@ -28,14 +29,16 @@ const MessageEvents = () => {
             const plainText = await decryptMessage(msg.text, msg.conversationId);
             const orgMsg =  {...msg, text: plainText, }// replace encrypted with decrypted
             
-            // console.log( "convoId being used:", msg.conversationId, typeof msg.conversationId );
             if(isSound && msg.conversationId===activeConvoId){
-                // console.log("is Read", msg.conversationId===activeConvoId)
                 new Audio(new_msg).play().catch((err)=>console.log("Sound coundn't play: ", err))
             }
             if(isSound && msg.conversationId!==activeConvoId){
-                // console.log("is delivered", msg.conversationId!==activeConvoId)
                 new Audio(new_notification).play().catch((err)=>console.log("Sound coundn't play: ", err))
+            }
+
+            // new message notification
+            if (document.hidden && Notification.permission === "granted") {
+                pushNotification('You have a new message', orgMsg.text)
             }
 
             dispatch(addMessage({ message: orgMsg }));
@@ -54,8 +57,6 @@ const MessageEvents = () => {
     // for sender - confirmation
     useEffect(() => {
         socket.on("message-delivery-confirmed", ({ msgId, receiver }) => {
-            // console.log( "msg sent confirmed by server. msgId:", msgId, "receiver:", receiver );
-            // console.log("my Id:", userId);
             // tempId taken care in http success itself
             dispatch(markMessageDelivered({ msgId, receiver }));
             dispatch(markLastMsgDelivered({ msgId, receiver, activeConvoId_otherSide }))
