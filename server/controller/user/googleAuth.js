@@ -25,6 +25,8 @@ async function googleAuthController(req, res) {
             const firstName = nameParts[0] || '';
             const lastName = nameParts.slice(1).join(' ') || '';
 
+            const lowResUrl = picture.replace(/=s\d+-c$/, '=s40-c');
+
             // Create user with Google data
             user = await User.create({ 
                 firstName, 
@@ -32,7 +34,11 @@ async function googleAuthController(req, res) {
                 username,
                 email, 
                 password: 'google-auth-user', // Placeholder password for Google users
-                profilePic: picture,
+                profilePic: {
+                    highResPic: picture,   // Store Google picture URL here
+                    highResPicPublicId: "",
+                    lowResPic: lowResUrl    
+                },
                 isVerified: true,
                 lastSeen: Date.now()
             });

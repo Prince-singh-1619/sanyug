@@ -166,6 +166,7 @@ const MyProfile = () => {
         const dataApi = await response.json()
         if(dataApi.success){
           dispatch(setUserData({ userData:dataApi.data }))
+          setUser(dataApi.data)
           toast.success(dataApi.message)
         }
         if(dataApi.error){
