@@ -263,9 +263,9 @@ const UserSearchPopup = ({ isOpen, onClose }) => {
             <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                  {searchResult.profilePic ? (
+                  {searchResult.profilePic?.lowResPic ? (
                     <img 
-                      src={searchResult.profilePic} 
+                      src={searchResult.profilePic?.lowResPic} 
                       alt={searchResult.firstName}
                       className="w-12 h-12 rounded-lg object-cover lazy-loading"
                     />

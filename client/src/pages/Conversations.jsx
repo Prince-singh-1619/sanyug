@@ -20,6 +20,7 @@ import ConvoDropdown from '../components/ConvoDropdown'
 import UserSearchPopup from '../popups/UserSearchPopup'
 import useIsMobile from '../hooks/useIsMobile'
 import logo from '../assets/logo 3.png'
+import { getSocket } from '../socket/socket'
 
 
 const Conversations = () => {
@@ -39,6 +40,8 @@ const Conversations = () => {
 
     const navigate = useNavigate()
     const dispatch = useDispatch()
+
+    const socket = getSocket();
 
     const formatChatTimestamp = (dateString) =>{
         if (!dateString) return "";
@@ -90,6 +93,51 @@ const Conversations = () => {
         );
     };
 
+    const formatChats = (rawConvo) =>{
+        if (!rawConvo) return [];
+
+        // If it's a single object, wrap it in an array
+        const convoArray = Array.isArray(rawConvo) ? rawConvo : [rawConvo];
+
+        const allConvo = convoArray.map(convo => {
+            if (convo.isGroup) {
+                // Group chat display
+                return {
+                    convoId: convo._id,
+                    name: convo.groupName,
+                    profilePic: convo?.groupImage,
+                    lastMsg: convo?.lastMessage,
+                    sender: convo.lastMessage?.sender,
+                    participants: convo.participants,
+                    createdAt: convo?.lastMessage?.createdAt ? formatChatTimestamp(convo?.lastMessage.createdAt) : formatChatTimestamp(convo.createdAt),
+                    unreadCount: convo.unreadCount
+                };
+            } else {
+                // One-to-one chat
+                const otherUser = convo.participants.find(p => p._id !== userId); // assuming you already filtered out logged-in user
+                return {
+                    convoId: convo._id,
+                    name: `${otherUser.firstName} ${otherUser.lastName}`,
+                    profilePic: otherUser?.profilePic ,
+                    lastMsg: convo?.lastMessage,
+                    sender: convo?.lastMessage?.sender,
+                    participants: convo.participants,
+                    lastSeen:  formatChatTimestamp(otherUser.lastSeen),
+                    createdAt: convo?.lastMessage?.createdAt ? formatChatTimestamp(convo?.lastMessage.createdAt) : formatChatTimestamp(convo.createdAt),
+                    unreadCount: convo?.unreadCount || 0
+                };
+            }
+        });
+
+        // Sort by last message timestamp (most recent first)
+        allConvo.sort((a, b) => {
+            const aTime = a.lastMsg?.createdAt ? new Date(a.lastMsg.createdAt).getTime() : new Date(a.createdAt).getTime();
+            const bTime = b.lastMsg?.createdAt ? new Date(b.lastMsg.createdAt).getTime() : new Date(b.createdAt).getTime();
+            return bTime - aTime; // descending order
+        });
+
+        return allConvo;
+    }
 
     const fetchAllChats = async() =>{
         console.log("fetching chats")
@@ -112,46 +160,11 @@ const Conversations = () => {
             // console.log("resData in fetchAllChats:", resData);
             const decryptedConvos = await decryptAllConversations(resData.data);
 
-            const allConvo = decryptedConvos.map(convo => {
-                if (convo.isGroup) {
-                    // Group chat display
-                    return {
-                        convoId: convo._id,
-                        name: convo.groupName,
-                        profilePic: convo?.groupImage,
-                        lastMsg: convo?.lastMessage,
-                        sender: convo.lastMessage?.sender,
-                        participants: convo.participants,
-                        createdAt: convo?.lastMessage?.createdAt ? formatChatTimestamp(convo?.lastMessage.createdAt) : formatChatTimestamp(convo.createdAt),
-                        unreadCount: convo.unreadCount
-                    };
-                } else {
-                    // One-to-one chat
-                    const otherUser = convo.participants.find(p => p._id !== userId); // assuming you already filtered out logged-in user
-                    return {
-                        convoId: convo._id,
-                        name: `${otherUser.firstName} ${otherUser.lastName}`,
-                        profilePic: otherUser?.profilePic ,
-                        lastMsg: convo?.lastMessage,
-                        sender: convo?.lastMessage?.sender,
-                        participants: convo.participants,
-                        lastSeen:  formatChatTimestamp(otherUser.lastSeen),
-                        createdAt: convo?.lastMessage?.createdAt ? formatChatTimestamp(convo?.lastMessage.createdAt) : formatChatTimestamp(convo.createdAt),
-                        unreadCount: convo?.unreadCount || 0
-                    };
-                }
-            });
-
-            // Sort by last message timestamp (most recent first)
-            allConvo.sort((a, b) => {
-                const aTime = a.lastMsg?.createdAt ? new Date(a.lastMsg.createdAt).getTime() : new Date(a.createdAt).getTime();
-                const bTime = b.lastMsg?.createdAt ? new Date(b.lastMsg.createdAt).getTime() : new Date(b.createdAt).getTime();
-                return bTime - aTime; // descending order
-            });
+            const allConvo = formatChats(decryptedConvos)
 
             // setConvoList(allConvo); // update state
             dispatch(setConvos({allConvo, userId}));
-            // console.log("convo list: ", allConvo)
+            console.log("convo list: ", allConvo)
         } catch (error) {
             setError(true)
             console.error("Error fetching convos", error)
@@ -159,14 +172,15 @@ const Conversations = () => {
             setLoading(false)
         }
     }
-
+    
+    const [hasFetched, setHasFetched] = useState(false);
     useEffect(()=>{
-        if (!convoList){
+        if (!hasFetched && (!convoList || convoList.length === 0)){
             console.log("Calling.....")
             fetchAllChats()
+            setHasFetched(true);  // Prevent endless refetch
         }
-    //    if(!convoList) fetchAllChats()
-    }, [convoList, dispatch])
+    }, [convoList, hasFetched])
 
     const displayMessage = (index) =>{
         const selectedChat = convoList[index];
@@ -198,15 +212,20 @@ const Conversations = () => {
                 })
             })
 
-            const data = await res.json();
+            const resData = await res.json();
 
             if (!res.ok) {
-                console.error('Error creating/fetching conversation:', data.message);
+                console.error('Error creating/fetching conversation:', resData.message);
                 return;
             }
 
-            console.log('Conversation created/fetched:', data);
-            window.location.reload()  // reloads the page
+            console.log('Conversation created/fetched:', resData);
+            if(resData.success){
+                await fetchAllChats()
+                // const convo = formatChats(resData.data)
+                socket.emit("new-convo-added", ({newConvoForB:resData.data, userId}))
+            }
+            // window.location.reload()  // reloads the page
 
             // Optionally update your state to show new conversation instantly
             // setConversations(prev => [...prev, data]);
@@ -266,10 +285,10 @@ const Conversations = () => {
                 filteredConvos.length > 0 ? 
                 filteredConvos.map((data, index)=>{
                     return(
-                        <button key={index} onClick={()=>displayMessage(index)} className={`h-18 my-auto cursor-pointer border-b border-slate-400 hover:bg-gray-300 dark:hover:bg-gray-500/75 ${activeConvoId===data.convoId ? 'bg-gray-400/75 dark:bg-gray-600 text-black dark:text-white':''}`}>
+                        <button key={index} onClick={()=>displayMessage(index)} className={`h-18 my-auto cursor-pointer border-b border-slate-400 hover:bg-gray-300 dark:hover:bg-gray-500/75 ${activeConvoId===data.convoId ? 'md:bg-gray-400/75 dark:md:bg-gray-600 text-black dark:text-white':''}`}>
                             <div className='w-full flex items-center justify-between px-2 '>
                                 <div className='w-full flex items-center gap-2 justify-center'>
-                                    <img src={data.profilePic ? data.profilePic?.lowResPic : dummyDp} alt={data?.name} className='min-w-12 h-12 rounded-lg object-cover lazy-loading'/>
+                                    <img src={data.profilePic?.lowResPic ? data.profilePic?.lowResPic : dummyDp} alt={data?.name} className='min-w-12 h-12 rounded-lg object-cover lazy-loading'/>
                                     <div className='w-full flex flex-col items-start'>
                                         <div className='w-full flex items-center justify-between'>
                                             <p className='text-lg font-lg capitalize text-nowrap overflow-hidden'>{data?.name}</p>
@@ -295,8 +314,8 @@ const Conversations = () => {
             {/* for new user */}
             { error ? "Error loading Chats" : (
                 !loading && convoList.length===0 && 
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600 flex flex-col gap-4">
-                    <span className='text-yellow-400 mx-auto'>Don't have anyone yet, try chatting with the Admin</span>
+                <div className="bg-slate-100 dark:bg-[#151515] rounded-xl p-4 border border-gray-400 dark:border-gray-600 flex flex-col gap-4">
+                    <span className='text-yellow-500 mx-auto'>Don't have anyone yet, try chatting with the Admin</span>
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
                             <BiUser className="w-6 h-6 " />
