@@ -161,7 +161,7 @@ const Conversations = () => {
     }
 
     useEffect(()=>{
-        if (!convoList || convoList.length === 0){
+        if (!convoList){
             console.log("Calling.....")
             fetchAllChats()
         }
@@ -345,7 +345,7 @@ const Conversations = () => {
                     Select a conversation
                 </p>
                 <p className='text-sm opacity-75 max-w-sm'>
-                    Choose a conversation from the sidebar to start messaging
+                    Choose a conversation from the left to start messaging
                 </p>
             </div>
         )}
